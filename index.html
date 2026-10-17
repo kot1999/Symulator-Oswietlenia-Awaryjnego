@@ -133,7 +133,7 @@
             box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.25);
         }
 
-        /* Korpus belki (Układ sekcji dokładnie jak na radiowozie ze zdjęcia):
+        /* Korpus belki:
            [Lewy klosz niebieski] [Bezbarwny L] [POLICJA] [Czerwony klosz PILOT] [Bezbarwny P] [Prawy klosz niebieski] */
         .lzn-body {
             width: 100%;
@@ -657,7 +657,7 @@
                 <!-- Górna pokrywa -->
                 <div class="lzn-top-cap"></div>
 
-                <!-- Główny klosz belki LZN LF SLENDER (układ dokładnie jak na zdjęciu) -->
+                <!-- Główny klosz belki LZN LF SLENDER -->
                 <div class="lzn-body">
                     <!-- 1. LEWY KLOSZ NIEBIESKI: Lampa boczna Alley L + 2 moduły niebieskie MD3 -->
                     <div class="lens-section lens-blue-tint">
@@ -1105,6 +1105,14 @@
             if (audioCtx.state === 'suspended') await audioCtx.resume();
             
             const btnSiren = document.getElementById('btn-siren');
+            const btnLight1 = document.getElementById('btn-light1');
+
+            // Automatyczne włączenie koguta głównego (Kogut pusty) przy włączeniu syreny
+            if (!lightState.blueMain) {
+                lightState.blueMain = true;
+                btnLight1.classList.add('active');
+                applyStaticLights();
+            }
 
             if (!isSirenActive) {
                 isSirenActive = true;
