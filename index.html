@@ -6,23 +6,22 @@
     <title>Symulator LZN LF SLENDER & Federal Signal AS 422 Polonia</title>
     <style>
         * {
-            -webkit-touch-callout: none;
+            -webkit-touch-callout: none; /* Blokuje menu na iOS/Android */
             -webkit-user-select: none;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
-            box-sizing: border-box;
         }
 
         body {
-            background-color: #121316;
-            background-image: radial-gradient(circle at 35% 50%, #1c1f26 0%, #101114 75%);
+            background-color: #16171a;
+            background-image: radial-gradient(circle at 35% 50%, #1e2128 0%, #121316 75%);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
             font-family: 'Arial Narrow', Arial, sans-serif;
-            touch-action: none;
+            touch-action: none; /* Całkowicie blokuje gesty przeglądarki przy trzymaniu palca */
             overflow: hidden;
             color: #cfd6e0;
         }
@@ -36,12 +35,18 @@
             width: 100%;
             max-width: 1360px;
             padding: 20px 40px;
-            gap: 40px;
+            gap: 48px;
+            box-sizing: border-box;
         }
 
         /* =========================================================
            LEWA STRONA: SYMULATOR BELKI ELEKTRA LZN LF SLENDER
            ========================================================= */
+        .lightbar-stage,
+        .lightbar-stage * {
+            box-sizing: border-box;
+        }
+
         .lightbar-stage {
             flex: 1;
             display: flex;
@@ -55,7 +60,6 @@
         /* Poświata otoczenia rzucana przez belkę */
         .ambient-glow {
             position: absolute;
-            width: 90%;
             height: 260px;
             border-radius: 50%;
             filter: blur(65px);
@@ -66,18 +70,18 @@
         }
         .ambient-left {
             left: -5%;
-            width: 55%;
+            width: 52%;
             background: radial-gradient(circle, rgba(0, 110, 255, 0.65) 0%, transparent 70%);
         }
         .ambient-right {
             right: -5%;
-            width: 55%;
+            width: 48%;
             background: radial-gradient(circle, rgba(0, 110, 255, 0.65) 0%, transparent 70%);
         }
         .ambient-red {
-            left: 22%;
-            width: 35%;
-            background: radial-gradient(circle, rgba(255, 20, 20, 0.65) 0%, transparent 70%);
+            left: 48%;
+            width: 32%;
+            background: radial-gradient(circle, rgba(255, 20, 20, 0.7) 0%, transparent 70%);
         }
 
         /* Stożki światła bocznego (Alley Lights) */
@@ -107,7 +111,7 @@
             opacity: 1;
         }
 
-        /* Główny kontener belki LZN LF SLENDER */
+        /* Główny kontener belki LZN LF SLENDER (zachowane proporcje) */
         .lzn-wrapper {
             position: relative;
             width: 100%;
@@ -118,7 +122,7 @@
             z-index: 2;
         }
 
-        /* Górna pokrywa niskoprofilowa (Aluminium / Poliwęglan) */
+        /* Górna pokrywa niskoprofilowa */
         .lzn-top-cap {
             width: 96%;
             height: 12px;
@@ -129,14 +133,15 @@
             box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.25);
         }
 
-        /* Korpus belki (Wysokość 82mm w skali) */
+        /* Korpus belki (Układ sekcji dokładnie jak na radiowozie ze zdjęcia):
+           [Lewy klosz niebieski] [Bezbarwny L] [POLICJA] [Czerwony klosz PILOT] [Bezbarwny P] [Prawy klosz niebieski] */
         .lzn-body {
             width: 100%;
             height: 78px;
             background: #141619;
             border-radius: 16px;
             display: grid;
-            grid-template-columns: 52px 1fr 1.15fr 180px 1.15fr 1fr 52px;
+            grid-template-columns: 2.55fr 0.55fr 184px 0.85fr 0.55fr 1.7fr;
             overflow: hidden;
             position: relative;
             border: 2px solid #0c0d0f;
@@ -146,73 +151,100 @@
                 inset 0 -3px 6px rgba(0, 0, 0, 0.9);
         }
 
-        /* Ryflowanie klosza poliwęglanowego (linie Fresnela) */
+        /* Ryflowanie klosza poliwęglanowego (linie optyczne Fresnela na całej belce) */
         .lzn-body::after {
             content: "";
             position: absolute;
             inset: 0;
             background: repeating-linear-gradient(
                 90deg,
-                rgba(255, 255, 255, 0.04) 0px,
-                rgba(255, 255, 255, 0.04) 2px,
+                rgba(255, 255, 255, 0.045) 0px,
+                rgba(255, 255, 255, 0.045) 2px,
                 transparent 2px,
                 transparent 5px
             ),
-            linear-gradient(180deg, rgba(255,255,255,0.16) 0%, transparent 28%, rgba(0,0,0,0.35) 100%);
+            linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 28%, rgba(0,0,0,0.38) 100%);
             pointer-events: none;
             z-index: 6;
         }
 
-        /* Pionowe uszczelki dzielące sekcje kloszy */
+        /* Pionowe uszczelki dzielące klosze */
         .lens-section {
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 6px 5px;
+            padding: 6px 6px;
+            gap: 6px;
             border-right: 2px solid #0b0c0e;
         }
         .lens-section:last-child {
             border-right: none;
         }
 
-        /* Kolor klosza niebieskiego (sekcje narożne i pośrednie) */
+        /* STAŁY KLOSZ NIEBIESKI (sekcje boczne) */
         .lens-blue-tint {
-            background: linear-gradient(180deg, #0b2247 0%, #071733 50%, #051024 100%);
+            background: linear-gradient(180deg, #0d2c63 0%, #081d42 50%, #051129 100%);
+            box-shadow: inset 0 0 12px rgba(0, 80, 255, 0.25);
         }
 
-        /* Kolor klosza bezbarwnego / przydymionego (sekcje wewnętrzne z lampami roboczymi i PILOTEM) */
+        /* STAŁY KLOSZ CZERWONY (sekcja PILOT po prawej stronie napisu POLICJA) */
+        .lens-red-tint {
+            background: linear-gradient(180deg, #7a0c14 0%, #52060c 50%, #300307 100%);
+            box-shadow: inset 0 0 12px rgba(255, 20, 20, 0.25);
+        }
+
+        /* KLOSZ BEZBARWNY (wąskie okienka reflektorów roboczych przednich) */
         .lens-clear-tint {
-            background: linear-gradient(180deg, #1d2128 0%, #13161b 50%, #0d0f12 100%);
+            background: linear-gradient(180deg, #232830 0%, #16191f 50%, #0e1014 100%);
         }
 
         /* Moduł LED MD3 (3 soczewki kolimatorowe w rzędzie) */
         .md3-module {
-            width: 100%;
+            flex: 1;
             height: 44px;
-            background: linear-gradient(180deg, #101318 0%, #1c2026 50%, #0e1014 100%);
-            border: 1px solid #2e343d;
             border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: space-evenly;
             padding: 0 4px;
             position: relative;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.9);
             transition: background 0.04s ease, box-shadow 0.04s ease, border-color 0.04s ease;
+        }
+
+        /* Wygląd spoczynkowy modułu pod niebieskim kloszem */
+        .lens-blue-tint .md3-module {
+            background: linear-gradient(180deg, #091e42 0%, #102a59 50%, #071530 100%);
+            border: 1px solid #1e4587;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.85);
+        }
+
+        /* Wygląd spoczynkowy modułu pod stałym czerwonym kloszem */
+        .lens-red-tint .md3-module {
+            background: linear-gradient(180deg, #42080d 0%, #5e0e15 50%, #2e0408 100%);
+            border: 1px solid #8c1d26;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.85);
         }
 
         /* Pojedyncza dioda LED z soczewką */
         .led-diode {
-            width: 24px;
+            width: 22px;
             height: 28px;
             border-radius: 5px;
-            background: radial-gradient(circle at 50% 50%, #4a5568 0%, #1e242d 65%, #0f1318 100%);
-            border: 1px solid #3a424e;
-            box-shadow: inset 0 1px 3px rgba(255,255,255,0.25);
             position: relative;
             transition: all 0.04s ease;
         }
+        .lens-blue-tint .led-diode {
+            background: radial-gradient(circle at 50% 50%, #2b579a 0%, #122952 65%, #08152e 100%);
+            border: 1px solid #2e5ca3;
+            box-shadow: inset 0 1px 3px rgba(140, 190, 255, 0.25);
+        }
+        .lens-red-tint .led-diode {
+            background: radial-gradient(circle at 50% 50%, #9e202b 0%, #540c12 65%, #2b0508 100%);
+            border: 1px solid #ab2934;
+            box-shadow: inset 0 1px 3px rgba(255, 150, 150, 0.25);
+        }
+
         .led-diode::after {
             content: "";
             position: absolute;
@@ -222,63 +254,68 @@
             height: 8px;
             transform: translate(-50%, -50%);
             border-radius: 50%;
-            background: #2b323c;
+        }
+        .lens-blue-tint .led-diode::after {
+            background: #1a3a6e;
+        }
+        .lens-red-tint .led-diode::after {
+            background: #6e151d;
         }
 
         /* STAN AKTYWNY: Niebieski moduł MD3 */
         .md3-module.blue-on {
-            background: #0066ff;
-            border-color: #99ccff;
+            background: #0066ff !important;
+            border-color: #99ccff !important;
             box-shadow:
                 0 0 25px 6px rgba(0, 110, 255, 0.95),
                 0 0 55px 15px rgba(0, 80, 255, 0.65),
-                inset 0 0 12px #ffffff;
+                inset 0 0 12px #ffffff !important;
             z-index: 5;
         }
         .md3-module.blue-on .led-diode {
-            background: radial-gradient(circle, #ffffff 0%, #80bfff 45%, #0066ff 100%);
-            border-color: #ffffff;
-            box-shadow: 0 0 12px #ffffff;
+            background: radial-gradient(circle, #ffffff 0%, #80bfff 45%, #0066ff 100%) !important;
+            border-color: #ffffff !important;
+            box-shadow: 0 0 12px #ffffff !important;
         }
         .md3-module.blue-on .led-diode::after {
-            background: #ffffff;
+            background: #ffffff !important;
         }
 
         /* STAN CRUISE (podświetlenie pozycyjne 25% na przycisku AUX2) */
         .md3-module.cruise-on:not(.blue-on) {
-            background: rgba(0, 70, 200, 0.35);
-            border-color: #2b6cb0;
-            box-shadow: 0 0 12px rgba(0, 102, 255, 0.45);
+            background: rgba(0, 85, 230, 0.45) !important;
+            border-color: #4da3ff !important;
+            box-shadow: 0 0 14px rgba(0, 110, 255, 0.55) !important;
         }
         .md3-module.cruise-on:not(.blue-on) .led-diode {
-            background: radial-gradient(circle, #90cdf4 0%, #2b6cb0 60%, #1a365d 100%);
+            background: radial-gradient(circle, #a3d5ff 0%, #1f6feb 60%, #10397a 100%) !important;
         }
 
-        /* STAN AKTYWNY: Czerwony moduł PILOT (Kogut półpełny) */
+        /* STAN AKTYWNY: Czerwony moduł PILOT (pod czerwonym kloszem) */
         .md3-module.red-on {
-            background: #ff1a1a;
-            border-color: #ffb3b3;
+            background: #ff1a1a !important;
+            border-color: #ffb3b3 !important;
             box-shadow:
                 0 0 25px 6px rgba(255, 20, 20, 0.95),
                 0 0 55px 15px rgba(255, 0, 0, 0.65),
-                inset 0 0 12px #ffffff;
+                inset 0 0 12px #ffffff !important;
             z-index: 5;
         }
         .md3-module.red-on .led-diode {
-            background: radial-gradient(circle, #ffffff 0%, #ff8080 45%, #ff0000 100%);
-            border-color: #ffffff;
-            box-shadow: 0 0 12px #ffffff;
+            background: radial-gradient(circle, #ffffff 0%, #ff8080 45%, #ff0000 100%) !important;
+            border-color: #ffffff !important;
+            box-shadow: 0 0 12px #ffffff !important;
         }
         .md3-module.red-on .led-diode::after {
-            background: #ffffff;
+            background: #ffffff !important;
         }
 
-        /* STAN AKTYWNY: Białe lampy robocze (Takedown / Alley) */
+        /* Białe lampy robocze (Takedown w bezbarwnych okienkach oraz Alley na bokach) */
         .work-light {
             width: 100%;
             height: 44px;
-            background: linear-gradient(180deg, #16191e 0%, #22262e 50%, #121519 100%);
-            border: 1px solid #383f4b;
+            background: linear-gradient(180deg, #1b1f26 0%, #282d36 50%, #15181d 100%);
+            border: 1px solid #454e5e;
             border-radius: 6px;
             display: flex;
             align-items: center;
@@ -286,45 +323,40 @@
             padding: 0 3px;
             transition: all 0.1s ease;
         }
+        .work-light.side-alley {
+            width: 34px;
+            flex-shrink: 0;
+        }
         .work-light .led-diode {
             width: 18px;
             height: 26px;
+            background: radial-gradient(circle at 50% 50%, #5c6678 0%, #262c36 65%, #12151a 100%) !important;
+            border: 1px solid #4a5464 !important;
         }
         .work-light .led-diode::after {
-            background: #5a5235;
+            background: #6b613b !important;
         }
         .work-light.white-on {
-            background: #ffffff;
-            border-color: #ffffff;
+            background: #ffffff !important;
+            border-color: #ffffff !important;
             box-shadow:
                 0 0 30px 10px rgba(255, 255, 255, 0.95),
                 0 0 65px 22px rgba(210, 235, 255, 0.75),
-                inset 0 0 15px #ffffff;
+                inset 0 0 15px #ffffff !important;
             z-index: 5;
         }
         .work-light.white-on .led-diode {
-            background: radial-gradient(circle, #ffffff 0%, #eef7ff 60%, #cfe8ff 100%);
-            border-color: #ffffff;
-            box-shadow: 0 0 14px #ffffff;
+            background: radial-gradient(circle, #ffffff 0%, #eef7ff 60%, #cfe8ff 100%) !important;
+            border-color: #ffffff !important;
+            box-shadow: 0 0 14px #ffffff !important;
         }
         .work-light.white-on .led-diode::after {
-            background: #ffffff;
-        }
-
-        /* Sekcja podwójna (wewnętrzna przednia: Moduł ostrzegawczy + Lampa robocza Takedown) */
-        .inner-split {
-            display: grid;
-            grid-template-columns: 1.45fr 1fr;
-            gap: 5px;
-            width: 100%;
-        }
-        .inner-split.right-side {
-            grid-template-columns: 1fr 1.45fr;
+            background: #ffffff !important;
         }
 
         /* Środkowy kaseton podświetlany WL (Napis POLICJA) */
         .center-wl-panel {
-            background: linear-gradient(180deg, #aeb7c2 0%, #cfd6df 50%, #9fa8b5 100%);
+            background: linear-gradient(180deg, #d0d7e0 0%, #eef2f7 50%, #c2cbd6 100%);
             border-left: 3px solid #0c0d10;
             border-right: 3px solid #0c0d10;
             display: flex;
@@ -333,27 +365,27 @@
             position: relative;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.35);
         }
         .center-wl-panel.illuminated {
-            background: radial-gradient(circle, #ffffff 0%, #f0f6ff 70%, #d8e8ff 100%);
+            background: radial-gradient(circle, #ffffff 0%, #f5f9ff 70%, #dcebff 100%);
             box-shadow:
-                0 0 28px 4px rgba(255, 255, 255, 0.8),
+                0 0 30px 5px rgba(255, 255, 255, 0.85),
                 inset 0 0 15px rgba(255, 255, 255, 1);
             z-index: 4;
         }
         .wl-text {
             font-family: 'Arial Black', Impact, sans-serif;
-            font-size: 23px;
+            font-size: 24px;
             font-weight: 900;
-            letter-spacing: 2px;
-            color: #003894;
-            text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+            letter-spacing: 2.5px;
+            color: #003380;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.5);
             z-index: 7;
             transition: color 0.15s ease, text-shadow 0.15s ease;
         }
         .center-wl-panel.illuminated .wl-text {
-            color: #0044b5;
+            color: #003ea1;
             text-shadow: 0 0 8px rgba(0, 102, 255, 0.45);
         }
 
@@ -436,14 +468,14 @@
         }
 
         /* =========================================================
-           PRAWA STRONA: PILOT FEDERAL SIGNAL AS 422 POLONIA
+           PRAWA STRONA: ORYGINALNY PILOT FEDERAL SIGNAL AS 422 POLONIA
+           (Zachowane w 100% oryginalne wymiary i proporcje z kodu)
            ========================================================= */
         .remote-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
             flex-shrink: 0;
-            z-index: 10;
         }
 
         /* Główna obudowa pilota */
@@ -603,28 +635,6 @@
             height: 36px;
             background: linear-gradient(90deg, #0e0e10, #232427, #0b0b0c);
         }
-
-        /* Responsywność dla mniejszych ekranów (zachowuje układ lewo-prawo ze skalowaniem) */
-        @media (max-width: 980px) {
-            .simulator-layout {
-                padding: 10px 16px;
-                gap: 20px;
-            }
-            .lzn-body {
-                height: 64px;
-                grid-template-columns: 38px 1fr 1.1fr 130px 1.1fr 1fr 38px;
-            }
-            .wl-text {
-                font-size: 16px;
-            }
-            .led-diode {
-                width: 16px;
-                height: 22px;
-            }
-            .remote-wrapper {
-                transform: scale(0.9);
-            }
-        }
     </style>
 </head>
 <body>
@@ -647,75 +657,63 @@
                 <!-- Górna pokrywa -->
                 <div class="lzn-top-cap"></div>
 
-                <!-- Główny klosz belki LZN LF SLENDER -->
+                <!-- Główny klosz belki LZN LF SLENDER (układ dokładnie jak na zdjęciu) -->
                 <div class="lzn-body">
-                    <!-- 1. Lewa lampa robocza boczna (Alley Light L) -->
-                    <div class="lens-section lens-clear-tint">
-                        <div class="work-light" id="mod-alley-l" title="Lampa robocza boczna lewa">
+                    <!-- 1. LEWY KLOSZ NIEBIESKI: Lampa boczna Alley L + 2 moduły niebieskie MD3 -->
+                    <div class="lens-section lens-blue-tint">
+                        <div class="work-light side-alley" id="mod-alley-l" title="Lampa robocza boczna lewa">
                             <div class="led-diode"></div>
                         </div>
-                    </div>
-
-                    <!-- 2. Lewy zewnętrzny moduł ostrzegawczy MD3 (Niebieski) -->
-                    <div class="lens-section lens-blue-tint">
                         <div class="md3-module" id="mod-blue-l1" title="Moduł MD3 Niebieski L1">
                             <div class="led-diode"></div>
                             <div class="led-diode"></div>
                             <div class="led-diode"></div>
                         </div>
-                    </div>
-
-                    <!-- 3. Lewa sekcja wewnętrzna: Moduł Czerwony PILOT / Niebieski + Przednia lampa robocza (Takedown L) -->
-                    <div class="lens-section lens-clear-tint">
-                        <div class="inner-split">
-                            <!-- Moduł Czerwony "PILOT" / Niebieski wewnętrzny -->
-                            <div class="md3-module" id="mod-pilot-l2" title="Moduł MD3 Czerwony PILOT / Niebieski">
-                                <div class="led-diode"></div>
-                                <div class="led-diode"></div>
-                                <div class="led-diode"></div>
-                            </div>
-                            <!-- Przedni reflektor roboczy lewy -->
-                            <div class="work-light" id="mod-takedown-l" title="Przednia lampa robocza lewa">
-                                <div class="led-diode"></div>
-                                <div class="led-diode"></div>
-                            </div>
+                        <div class="md3-module" id="mod-blue-l2" title="Moduł MD3 Niebieski L2">
+                            <div class="led-diode"></div>
+                            <div class="led-diode"></div>
+                            <div class="led-diode"></div>
                         </div>
                     </div>
 
-                    <!-- 4. Środkowy podświetlany kaseton WL (kliknij, aby zmienić napis) -->
+                    <!-- 2. LEWY KLOSZ BEZBARWNY: Przednia lampa robocza (Takedown L) -->
+                    <div class="lens-section lens-clear-tint">
+                        <div class="work-light" id="mod-takedown-l" title="Przednia lampa robocza lewa">
+                            <div class="led-diode"></div>
+                            <div class="led-diode"></div>
+                        </div>
+                    </div>
+
+                    <!-- 3. ŚRODKOWY PODŚWIETLANY KASETON: Napis POLICJA -->
                     <div class="center-wl-panel" id="mod-wl-panel" onclick="cycleWlText()" title="Kliknij, aby zmienić napis na kasetonie">
                         <span class="wl-text" id="wl-text-content">POLICJA</span>
                     </div>
 
-                    <!-- 5. Prawa sekcja wewnętrzna: Przednia lampa robocza (Takedown R) + Moduł MD3 Niebieski -->
-                    <div class="lens-section lens-clear-tint">
-                        <div class="inner-split right-side">
-                            <!-- Przedni reflektor roboczy prawy -->
-                            <div class="work-light" id="mod-takedown-r" title="Przednia lampa robocza prawa">
-                                <div class="led-diode"></div>
-                                <div class="led-diode"></div>
-                            </div>
-                            <!-- Prawy wewnętrzny moduł ostrzegawczy MD3 (Niebieski) -->
-                            <div class="md3-module" id="mod-blue-r2" title="Moduł MD3 Niebieski P2">
-                                <div class="led-diode"></div>
-                                <div class="led-diode"></div>
-                                <div class="led-diode"></div>
-                            </div>
+                    <!-- 4. STAŁY KLOSZ CZERWONY (po prawej od napisu POLICJA): Moduł Czerwony PILOT -->
+                    <div class="lens-section lens-red-tint">
+                        <div class="md3-module" id="mod-pilot-red" title="Moduł MD3 Czerwony PILOT pod czerwonym kloszem">
+                            <div class="led-diode"></div>
+                            <div class="led-diode"></div>
+                            <div class="led-diode"></div>
                         </div>
                     </div>
 
-                    <!-- 6. Prawy zewnętrzny moduł ostrzegawczy MD3 (Niebieski) -->
+                    <!-- 5. PRAWY KLOSZ BEZBARWNY: Przednia lampa robocza (Takedown R) -->
+                    <div class="lens-section lens-clear-tint">
+                        <div class="work-light" id="mod-takedown-r" title="Przednia lampa robocza prawa">
+                            <div class="led-diode"></div>
+                            <div class="led-diode"></div>
+                        </div>
+                    </div>
+
+                    <!-- 6. PRAWY KLOSZ NIEBIESKI: Moduł niebieski MD3 + Lampa boczna Alley R -->
                     <div class="lens-section lens-blue-tint">
                         <div class="md3-module" id="mod-blue-r1" title="Moduł MD3 Niebieski P1">
                             <div class="led-diode"></div>
                             <div class="led-diode"></div>
                             <div class="led-diode"></div>
                         </div>
-                    </div>
-
-                    <!-- 7. Prawa lampa robocza boczna (Alley Light R) -->
-                    <div class="lens-section lens-clear-tint">
-                        <div class="work-light" id="mod-alley-r" title="Lampa robocza boczna prawa">
+                        <div class="work-light side-alley" id="mod-alley-r" title="Lampa robocza boczna prawa">
                             <div class="led-diode"></div>
                         </div>
                     </div>
@@ -1050,6 +1048,7 @@
                     const buffer = await audioCtx.decodeAudioData(arrayBuffer);
                     audioBuffers[name] = buffer;
 
+                    // Przycinanie pętli wykonujemy TYLKO dla plików 'priority' oraz 'horn'
                     if (name === 'priority' || name === 'horn') {
                         loopPoints[name] = findSeamlessLoopPoints(buffer);
                     }
@@ -1134,7 +1133,7 @@
             updateStatusBar();
         }
 
-        // --- OBSŁUGA AIR HORN ---
+        // --- OBSŁUGA AIR HORN (Chwilowy - odporny na długie przytrzymanie na dotyku) ---
         const btnAh = document.getElementById('btn-ah');
 
         btnAh.addEventListener('touchstart', startAirHorn, { passive: false });
@@ -1193,8 +1192,8 @@
         // 2. STEROWNIK OŚWIETLENIA BELKI ELEKTRA LZN LF SLENDER
         // =========================================================================
         const modBlueL1     = document.getElementById('mod-blue-l1');
-        const modPilotL2    = document.getElementById('mod-pilot-l2');
-        const modBlueR2     = document.getElementById('mod-blue-r2');
+        const modBlueL2     = document.getElementById('mod-blue-l2');
+        const modPilotRed   = document.getElementById('mod-pilot-red');
         const modBlueR1     = document.getElementById('mod-blue-r1');
         const modTakedownL  = document.getElementById('mod-takedown-l');
         const modTakedownR  = document.getElementById('mod-takedown-r');
@@ -1218,10 +1217,10 @@
         // Stan przycisków oświetlenia
         const lightState = {
             blueMain: false,   // btn-light1 (Kogut pusty - główne niebieskie MD3)
-            redPilot: false,   // btn-light2 (Kogut półpełny - czerwony moduł PILOT)
+            redPilot: false,   // btn-light2 (Kogut półpełny - czerwony moduł PILOT pod czerwonym kloszem)
             takedown: false,   // btn-grill1 (Reflektory w górę - robocze przednie)
             alley: false,      // btn-grill2 (Reflektory na boki - robocze boczne)
-            wlPanel: false,    // btn-aux1   (Lampka sufitowa - podświetlenie kasetonu WL)
+            wlPanel: false,    // btn-aux1   (Lampka sufitowa - podświetlenie kasetonu POLICJA)
             cruise: false,     // btn-aux2   (Pusty przycisk - tryb Cruise / zmiana wzoru)
             radio: false       // btn-radio  (Mikrofon)
         };
@@ -1296,16 +1295,16 @@
             // Podświetlenie kasetonu WL (POLICJA)
             modWlPanel.classList.toggle('illuminated', lightState.wlPanel);
 
-            // Tryb Cruise (stałe podświetlenie narożnych modułów niebieskich)
+            // Tryb Cruise (stałe podświetlenie skrajnych modułów niebieskich)
             modBlueL1.classList.toggle('cruise-on', lightState.cruise);
             modBlueR1.classList.toggle('cruise-on', lightState.cruise);
         }
 
         function clearFlashingModules() {
             modBlueL1.classList.remove('blue-on');
-            modPilotL2.classList.remove('blue-on', 'red-on');
-            modBlueR2.classList.remove('blue-on');
+            modBlueL2.classList.remove('blue-on');
             modBlueR1.classList.remove('blue-on');
+            modPilotRed.classList.remove('red-on');
             glowLeft.style.opacity = '0';
             glowRight.style.opacity = '0';
             glowRed.style.opacity = '0';
@@ -1335,9 +1334,6 @@
         // =========================================================================
         // 3. GENERATOR BŁYSKÓW ECE R65 (Potrójny błysk 2.1 Hz dla modułów MD3)
         // =========================================================================
-        // Cykl 480 ms (~2.1 Hz) podzielony na 12 kroków po 40 ms:
-        // Krok 0, 2, 4 -> Potrójny błysk strony LEWEJ (Faza A)
-        // Krok 6, 8, 10 -> Potrójny błysk strony PRAWEJ (Faza B)
         let flashStep = 0;
 
         setInterval(() => {
@@ -1354,45 +1350,34 @@
                 if (!lightState.cruise) {
                     // Standardowy naprzemienny 3-błysk Elektra (Lewa <-> Prawa)
                     modBlueL1.classList.toggle('blue-on', isPhaseA);
+                    modBlueL2.classList.toggle('blue-on', isPhaseA);
                     modBlueR1.classList.toggle('blue-on', isPhaseB);
-                    modBlueR2.classList.toggle('blue-on', isPhaseB);
 
-                    // Jeśli czerwony PILOT nie jest włączony, lewy wewnętrzny moduł miga na niebiesko
-                    if (!lightState.redPilot) {
-                        modPilotL2.classList.remove('red-on');
-                        modPilotL2.classList.toggle('blue-on', isPhaseA);
-                    }
                     glowLeft.style.opacity = isPhaseA ? '1' : '0';
                     glowRight.style.opacity = isPhaseB ? '1' : '0';
                 } else {
-                    // Wzór krzyżowy (Zewnętrzne <-> Wewnętrzne) gdy aktywny przycisk AUX2
+                    // Wzór naprzemienny (Zewnętrzne <-> Wewnętrzne) przy włączonym AUX2
                     modBlueL1.classList.toggle('blue-on', isPhaseA);
                     modBlueR1.classList.toggle('blue-on', isPhaseA);
-                    modBlueR2.classList.toggle('blue-on', isPhaseB);
+                    modBlueL2.classList.toggle('blue-on', isPhaseB);
 
-                    if (!lightState.redPilot) {
-                        modPilotL2.classList.remove('red-on');
-                        modPilotL2.classList.toggle('blue-on', isPhaseB);
-                    }
                     glowLeft.style.opacity = (isPhaseA || isPhaseB) ? '0.85' : '0';
-                    glowRight.style.opacity = (isPhaseA || isPhaseB) ? '0.85' : '0';
+                    glowRight.style.opacity = isPhaseA ? '1' : '0';
                 }
             } else {
                 modBlueL1.classList.remove('blue-on');
+                modBlueL2.classList.remove('blue-on');
                 modBlueR1.classList.remove('blue-on');
-                modBlueR2.classList.remove('blue-on');
-                modPilotL2.classList.remove('blue-on');
                 glowLeft.style.opacity = '0';
                 glowRight.style.opacity = '0';
             }
 
-            // --- ŚWIATŁO CZERWONE "PILOT" (moduł wewnętrzny L2) ---
+            // --- ŚWIATŁO CZERWONE "PILOT" (pod stałym czerwonym kloszem) ---
             if (lightState.redPilot) {
-                modPilotL2.classList.remove('blue-on');
-                modPilotL2.classList.toggle('red-on', isPhaseA);
-                glowRed.style.opacity = isPhaseA ? '1' : '0';
+                modPilotRed.classList.toggle('red-on', isPhaseB);
+                glowRed.style.opacity = isPhaseB ? '1' : '0';
             } else {
-                modPilotL2.classList.remove('red-on');
+                modPilotRed.classList.remove('red-on');
                 glowRed.style.opacity = '0';
             }
 
