@@ -281,7 +281,7 @@
             background: #ffffff !important;
         }
 
-        /* STAN CRUISE (podświetlenie postojowe włączane prawym dolnym przyciskiem) */
+        /* STAN CRUISE (podświetlenie postojowe - aktywne tylko przy wyłączonym świetle głównym) */
         .md3-module.cruise-on:not(.blue-on) {
             background: rgba(0, 95, 255, 0.48) !important;
             border-color: #55aaff !important;
@@ -761,7 +761,7 @@
                 </div>
                 <div class="status-item">
                     <div class="status-dot" id="st-cruise"></div>
-                    <span>Postojowe (Cruise)</span>
+                    <span id="st-cruise-label">Postojowe (Cruise)</span>
                 </div>
                 <div class="status-item">
                     <div class="status-dot" id="st-siren"></div>
@@ -896,7 +896,7 @@
                         </div>
                     </div>
 
-                    <!-- Rząd 5: Lampka sufitowa | Pusty przycisk (Podświetlenie postojowe) -->
+                    <!-- Rząd 5: Lampka sufitowa | Pusty przycisk (Postojowe / AH -> Robocze przód) -->
                     <div class="btn-well">
                         <div class="btn" id="btn-aux1" onclick="toggleLightBtn('btn-aux1')">
                             <svg viewBox="0 0 60 60">
@@ -1169,10 +1169,15 @@
             if (isAhPressed) return;
             isAhPressed = true;
             
+            btnAh.classList.add('active');
+
+            // Aktualizacja świateł (włącza Robocze przód jeśli aktywne światło główne + prawy dolny przycisk)
+            applyStaticLights();
+            updateStatusBar();
+
             await initAudioSystem();
             if (audioCtx.state === 'suspended') await audioCtx.resume();
-            
-            btnAh.classList.add('active');
+            if (!isAhPressed) return;
 
             if (currentSirenSource) {
                 try { currentSirenSource.stop(); } catch(e){}
@@ -1183,7 +1188,6 @@
                 try { currentHornSource.stop(); } catch(e){}
             }
             currentHornSource = playBuffer('horn', true);
-            updateStatusBar();
         }
 
         function stopAirHorn(e) {
@@ -1204,6 +1208,9 @@
                 }
                 currentSirenSource = playBuffer(sirenModes[currentModIndex]);
             }
+
+            // Wyłącza chwilowe Robocze przód po puszczeniu AH (jeśli nie były włączone na stałe)
+            applyStaticLights();
             updateStatusBar();
         }
 
@@ -1237,10 +1244,10 @@
         const lightState = {
             blueMain: false,   // btn-light1 (Kogut pusty - główne niebieskie MD3)
             redPilot: false,   // btn-light2 (Kogut półpełny - czerwony moduł PILOT pod czerwonym kloszem)
-            takedown: false,   // btn-grill1 (Reflektory w górę - robocze przednie)
+            takedown: false,   // btn-grill1 (Reflektory w górę - robocze przednie włączone na stałe)
             alley: false,      // btn-grill2 (Reflektory na boki - robocze boczne)
             wlPanel: false,    // btn-aux1   (Lampka sufitowa - podświetlenie kasetonu POLICJA)
-            cruise: false,     // btn-aux2   (Prawy dolny przycisk - podświetlenie postojowe Cruise)
+            aux2: false,       // btn-aux2   (Prawy dolny przycisk: Postojowe gdy główne WYŁ / AH->Robocze przód gdy główne WŁ)
             radio: false       // btn-radio  (Mikrofon)
         };
 
@@ -1266,7 +1273,7 @@
                     lightState.wlPanel = isActive;
                     break;
                 case 'btn-aux2':
-                    lightState.cruise = isActive;
+                    lightState.aux2 = isActive;
                     break;
                 case 'btn-radio':
                     lightState.radio = isActive;
@@ -1301,9 +1308,21 @@
 
         // Aktualizacja świateł ciągłych (Robocze przód, Robocze boki, Kaseton WL, Postojowe Cruise)
         function applyStaticLights() {
-            // Przednie lampy robocze (Takedown)
-            modTakedownL.classList.toggle('white-on', lightState.takedown);
-            modTakedownR.classList.toggle('white-on', lightState.takedown);
+            // Światło postojowe działa TYLKO, gdy światło główne (blueMain) jest WYŁĄCZONE
+            const isCruiseActive = lightState.aux2 && !lightState.blueMain;
+
+            // Gdy światło główne jest WŁĄCZONE oraz prawy dolny przycisk (aux2) jest WŁĄCZONY,
+            // trzymanie przycisku AH włącza przycisk i lampy "Robocze przód"
+            const isAhTakedownActive = isAhPressed && lightState.blueMain && lightState.aux2;
+            const effectiveTakedown = lightState.takedown || isAhTakedownActive;
+
+            // Synchronizacja podświetlenia przycisku "Robocze przód" (btn-grill1) na pilocie
+            const btnGrill1 = document.getElementById('btn-grill1');
+            btnGrill1.classList.toggle('active', effectiveTakedown);
+
+            // Przednie lampy robocze (Takedown) na belce
+            modTakedownL.classList.toggle('white-on', effectiveTakedown);
+            modTakedownR.classList.toggle('white-on', effectiveTakedown);
 
             // Boczne lampy robocze (Alley Lights)
             modAlleyL.classList.toggle('white-on', lightState.alley);
@@ -1314,34 +1333,48 @@
             // Podświetlenie kasetonu WL (POLICJA)
             modWlPanel.classList.toggle('illuminated', lightState.wlPanel);
 
-            // Podświetlenie postojowe (Cruise) na modułach niebieskich
-            modBlueL1.classList.toggle('cruise-on', lightState.cruise);
-            modBlueL2.classList.toggle('cruise-on', lightState.cruise);
-            modBlueR1.classList.toggle('cruise-on', lightState.cruise);
+            // Podświetlenie postojowe (Cruise) na modułach niebieskich (wyłącza się przy włączeniu głównych)
+            modBlueL1.classList.toggle('cruise-on', isCruiseActive);
+            modBlueL2.classList.toggle('cruise-on', isCruiseActive);
+            modBlueR1.classList.toggle('cruise-on', isCruiseActive);
 
             if (!lightState.blueMain) {
-                glowLeft.style.opacity = lightState.cruise ? '0.28' : '0';
-                glowRight.style.opacity = lightState.cruise ? '0.28' : '0';
+                glowLeft.style.opacity = isCruiseActive ? '0.28' : '0';
+                glowRight.style.opacity = isCruiseActive ? '0.28' : '0';
             }
         }
 
         function clearFlashingModules() {
+            const isCruiseActive = lightState.aux2 && !lightState.blueMain;
             modBlueL1.classList.remove('blue-on');
             modBlueL2.classList.remove('blue-on');
             modBlueR1.classList.remove('blue-on');
             modPilotRed.classList.remove('red-on');
-            glowLeft.style.opacity = lightState.cruise ? '0.28' : '0';
-            glowRight.style.opacity = lightState.cruise ? '0.28' : '0';
+            glowLeft.style.opacity = isCruiseActive ? '0.28' : '0';
+            glowRight.style.opacity = isCruiseActive ? '0.28' : '0';
             glowRed.style.opacity = '0';
         }
 
         function updateStatusBar() {
+            const isCruiseActive = lightState.aux2 && !lightState.blueMain;
+            const isAhTakedownMode = lightState.aux2 && lightState.blueMain;
+            const effectiveTakedown = lightState.takedown || (isAhPressed && isAhTakedownMode);
+
             document.getElementById('st-blue').className = 'status-dot' + (lightState.blueMain ? ' active-blue' : '');
             document.getElementById('st-red').className = 'status-dot' + (lightState.redPilot ? ' active-red' : '');
-            document.getElementById('st-takedown').className = 'status-dot' + (lightState.takedown ? ' active-white' : '');
+            document.getElementById('st-takedown').className = 'status-dot' + (effectiveTakedown ? ' active-white' : '');
             document.getElementById('st-alley').className = 'status-dot' + (lightState.alley ? ' active-white' : '');
             document.getElementById('st-wl').className = 'status-dot' + (lightState.wlPanel ? ' active-white' : '');
-            document.getElementById('st-cruise').className = 'status-dot' + (lightState.cruise ? ' active-blue' : '');
+
+            const stCruise = document.getElementById('st-cruise');
+            const stCruiseLabel = document.getElementById('st-cruise-label');
+            if (lightState.blueMain) {
+                stCruiseLabel.textContent = 'AH → Robocze Przód';
+                stCruise.className = 'status-dot' + (isAhTakedownMode ? ' active-amber' : '');
+            } else {
+                stCruiseLabel.textContent = 'Postojowe (Cruise)';
+                stCruise.className = 'status-dot' + (isCruiseActive ? ' active-blue' : '');
+            }
 
             const stSiren = document.getElementById('st-siren');
             const stLabel = document.getElementById('st-siren-label');
@@ -1368,11 +1401,12 @@
 
         setInterval(() => {
             if (!lightState.blueMain) {
+                const isCruiseActive = lightState.aux2 && !lightState.blueMain;
                 modBlueL1.classList.remove('blue-on');
                 modBlueL2.classList.remove('blue-on');
                 modBlueR1.classList.remove('blue-on');
-                glowLeft.style.opacity = lightState.cruise ? '0.28' : '0';
-                glowRight.style.opacity = lightState.cruise ? '0.28' : '0';
+                glowLeft.style.opacity = isCruiseActive ? '0.28' : '0';
+                glowRight.style.opacity = isCruiseActive ? '0.28' : '0';
                 return;
             }
 
@@ -1383,8 +1417,8 @@
             modBlueL2.classList.toggle('blue-on', isBluePhaseA);
             modBlueR1.classList.toggle('blue-on', isBluePhaseB);
 
-            glowLeft.style.opacity = isBluePhaseA ? '1' : (lightState.cruise ? '0.28' : '0');
-            glowRight.style.opacity = isBluePhaseB ? '1' : (lightState.cruise ? '0.28' : '0');
+            glowLeft.style.opacity = isBluePhaseA ? '1' : '0';
+            glowRight.style.opacity = isBluePhaseB ? '1' : '0';
 
             blueFlashStep = (blueFlashStep + 1) % 12;
         }, 75);
