@@ -1,0 +1,68 @@
+name: Budowanie aplikacji Android APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch: # Pozwala też uruchomić budowanie ręcznie przyciskiem
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Pobranie kodu z repozytorium
+        uses: actions/checkout@v4
+
+      - name: 2. Konfiguracja Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 3. Konfiguracja Java JDK 21 (wymagane przez Android SDK)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: 4. Przygotowanie plików i konfiguracja Capacitora
+        run: |
+          # Tworzymy folder tymczasowy www i kopiujemy pliki strony (z pominięciem plików systemowych)
+          mkdir -p www
+          rsync -av --exclude='www' --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='android' ./ www/
+
+          # Inicjalizacja projektu i instalacja Capacitora
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+
+          # Tworzenie pliku konfiguracyjnego aplikacji
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "pl.kot1999.symulatoroswietlenia",
+            "appName": "Symulator Oświetlenia Awaryjnego",
+            "webDir": "www",
+            "bundledWebRuntime": false
+          }
+          EOF
+
+          # Jeśli w projekcie jest plik icon.png (min. 512x512 px), wygeneruj z niego ikony Androida
+          if [ -f "icon.png" ]; then
+            mkdir -p assets
+            cp icon.png assets/icon.png
+            npx @capacitor/assets generate --android
+          fi
+
+          # Wygenerowanie natywnego projektu Android
+          npx cap add android
+          npx cap sync android
+
+      - name: 5. Kompilacja pliku .apk (Gradle)
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: 6. Udostępnienie gotowego pliku APK do pobrania
+        uses: actions/upload-artifact@v4
+        with:
+          name: Symulator-Oswietlenia-Awaryjnego-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
