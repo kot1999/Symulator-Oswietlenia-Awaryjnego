@@ -281,16 +281,6 @@
             background: #ffffff !important;
         }
 
-        /* STAN CRUISE (podświetlenie pozycyjne 25% na przycisku AUX2) */
-        .md3-module.cruise-on:not(.blue-on) {
-            background: rgba(0, 85, 230, 0.45) !important;
-            border-color: #4da3ff !important;
-            box-shadow: 0 0 14px rgba(0, 110, 255, 0.55) !important;
-        }
-        .md3-module.cruise-on:not(.blue-on) .led-diode {
-            background: radial-gradient(circle, #a3d5ff 0%, #1f6feb 60%, #10397a 100%) !important;
-        }
-
         /* STAN AKTYWNY: Czerwony moduł PILOT (pod czerwonym kloszem) */
         .md3-module.red-on {
             background: #ff1a1a !important;
@@ -1229,7 +1219,7 @@
             takedown: false,   // btn-grill1 (Reflektory w górę - robocze przednie)
             alley: false,      // btn-grill2 (Reflektory na boki - robocze boczne)
             wlPanel: false,    // btn-aux1   (Lampka sufitowa - podświetlenie kasetonu POLICJA)
-            cruise: false,     // btn-aux2   (Pusty przycisk - tryb Cruise / zmiana wzoru)
+            redSync: false,    // btn-aux2   (Pusty przycisk - zmiana synchronizacji czerwonego światła)
             radio: false       // btn-radio  (Mikrofon)
         };
 
@@ -1255,7 +1245,7 @@
                     lightState.wlPanel = isActive;
                     break;
                 case 'btn-aux2':
-                    lightState.cruise = isActive;
+                    lightState.redSync = isActive;
                     break;
                 case 'btn-radio':
                     lightState.radio = isActive;
@@ -1288,7 +1278,7 @@
             updateStatusBar();
         }
 
-        // Aktualizacja świateł ciągłych (Robocze przód, Robocze boki, Kaseton WL, Cruise)
+        // Aktualizacja świateł ciągłych (Robocze przód, Robocze boki, Kaseton WL)
         function applyStaticLights() {
             // Przednie lampy robocze (Takedown)
             modTakedownL.classList.toggle('white-on', lightState.takedown);
@@ -1302,10 +1292,6 @@
 
             // Podświetlenie kasetonu WL (POLICJA)
             modWlPanel.classList.toggle('illuminated', lightState.wlPanel);
-
-            // Tryb Cruise (stałe podświetlenie skrajnych modułów niebieskich)
-            modBlueL1.classList.toggle('cruise-on', lightState.cruise);
-            modBlueR1.classList.toggle('cruise-on', lightState.cruise);
         }
 
         function clearFlashingModules() {
@@ -1354,24 +1340,15 @@
             const isPhaseB = (flashStep === 6 || flashStep === 8 || flashStep === 10);
 
             // --- GŁÓWNE ŚWIATŁA NIEBIESKIE (MD3) ---
+            // Dwa lewe niebieskie moduły (L1 i L2) zawsze świecą razem w Fazie A,
+            // natomiast prawy moduł niebieski (R1) w Fazie B.
             if (lightState.blueMain) {
-                if (!lightState.cruise) {
-                    // Standardowy naprzemienny 3-błysk Elektra (Lewa <-> Prawa)
-                    modBlueL1.classList.toggle('blue-on', isPhaseA);
-                    modBlueL2.classList.toggle('blue-on', isPhaseA);
-                    modBlueR1.classList.toggle('blue-on', isPhaseB);
+                modBlueL1.classList.toggle('blue-on', isPhaseA);
+                modBlueL2.classList.toggle('blue-on', isPhaseA);
+                modBlueR1.classList.toggle('blue-on', isPhaseB);
 
-                    glowLeft.style.opacity = isPhaseA ? '1' : '0';
-                    glowRight.style.opacity = isPhaseB ? '1' : '0';
-                } else {
-                    // Wzór naprzemienny (Zewnętrzne <-> Wewnętrzne) przy włączonym AUX2
-                    modBlueL1.classList.toggle('blue-on', isPhaseA);
-                    modBlueR1.classList.toggle('blue-on', isPhaseA);
-                    modBlueL2.classList.toggle('blue-on', isPhaseB);
-
-                    glowLeft.style.opacity = (isPhaseA || isPhaseB) ? '0.85' : '0';
-                    glowRight.style.opacity = isPhaseA ? '1' : '0';
-                }
+                glowLeft.style.opacity = isPhaseA ? '1' : '0';
+                glowRight.style.opacity = isPhaseB ? '1' : '0';
             } else {
                 modBlueL1.classList.remove('blue-on');
                 modBlueL2.classList.remove('blue-on');
@@ -1381,9 +1358,12 @@
             }
 
             // --- ŚWIATŁO CZERWONE "PILOT" (pod stałym czerwonym kloszem) ---
+            // Dolny prawy przycisk (btn-aux2 -> lightState.redSync) zmienia wyłącznie
+            // synchronizację czerwonego światła (Faza B <-> Faza A).
             if (lightState.redPilot) {
-                modPilotRed.classList.toggle('red-on', isPhaseB);
-                glowRed.style.opacity = isPhaseB ? '1' : '0';
+                const isRedPhase = lightState.redSync ? isPhaseA : isPhaseB;
+                modPilotRed.classList.toggle('red-on', isRedPhase);
+                glowRed.style.opacity = isRedPhase ? '1' : '0';
             } else {
                 modPilotRed.classList.remove('red-on');
                 glowRed.style.opacity = '0';
