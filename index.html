@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Symulator LZN LF SLENDER & Federal Signal AS 422 Polonia</title>
+    <style>
+        * {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #121316;
+            background-image: radial-gradient(circle at 35% 50%, #1c1f26 0%, #101114 75%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Arial Narrow', Arial, sans-serif;
+            touch-action: none;
+            overflow: hidden;
+            color: #cfd6e0;
+        }
+
+        /* Główny układ: Belka po lewej, Pilot po prawej */
+        .simulator-layout {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1360px;
+            padding: 20px 40px;
+            gap: 40px;
+        }
+
+        /* =========================================================
+           LEWA STRONA: SYMULATOR BELKI ELEKTRA LZN LF SLENDER
+           ========================================================= */
+        .lightbar-stage {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 420px;
+        }
+
+        /* Poświata otoczenia rzucana przez belkę */
+        .ambient-glow {
+            position: absolute;
+            width: 90%;
+            height: 260px;
+            border-radius: 50%;
+            filter: blur(65px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.05s ease;
+            z-index: 0;
+        }
+        .ambient-left {
+            left: -5%;
+            width: 55%;
+            background: radial-gradient(circle, rgba(0, 110, 255, 0.65) 0%, transparent 70%);
+        }
+        .ambient-right {
+            right: -5%;
+            width: 55%;
+            background: radial-gradient(circle, rgba(0, 110, 255, 0.65) 0%, transparent 70%);
+        }
+        .ambient-red {
+            left: 22%;
+            width: 35%;
+            background: radial-gradient(circle, rgba(255, 20, 20, 0.65) 0%, transparent 70%);
+        }
+
+        /* Stożki światła bocznego (Alley Lights) */
+        .alley-beam {
+            position: absolute;
+            top: 50%;
+            width: 240px;
+            height: 150px;
+            transform: translateY(-58%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            z-index: 1;
+            filter: blur(8px);
+        }
+        .alley-beam.left {
+            right: calc(100% - 35px);
+            background: linear-gradient(270deg, rgba(255, 255, 255, 0.85) 0%, rgba(210, 235, 255, 0.25) 45%, transparent 100%);
+            clip-path: polygon(100% 38%, 0 0, 0 100%, 100% 62%);
+        }
+        .alley-beam.right {
+            left: calc(100% - 35px);
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.85) 0%, rgba(210, 235, 255, 0.25) 45%, transparent 100%);
+            clip-path: polygon(0 38%, 100% 0, 100% 100%, 0 62%);
+        }
+        .alley-beam.on {
+            opacity: 1;
+        }
+
+        /* Główny kontener belki LZN LF SLENDER */
+        .lzn-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 880px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 2;
+        }
+
+        /* Górna pokrywa niskoprofilowa (Aluminium / Poliwęglan) */
+        .lzn-top-cap {
+            width: 96%;
+            height: 12px;
+            background: linear-gradient(90deg, #1b1d21 0%, #383c44 20%, #525863 50%, #383c44 80%, #1b1d21 100%);
+            border-radius: 28px 28px 0 0;
+            border: 1px solid #0d0e10;
+            border-bottom: none;
+            box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.25);
+        }
+
+        /* Korpus belki (Wysokość 82mm w skali) */
+        .lzn-body {
+            width: 100%;
+            height: 78px;
+            background: #141619;
+            border-radius: 16px;
+            display: grid;
+            grid-template-columns: 52px 1fr 1.15fr 180px 1.15fr 1fr 52px;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid #0c0d0f;
+            box-shadow:
+                0 12px 28px rgba(0, 0, 0, 0.85),
+                inset 0 2px 4px rgba(255, 255, 255, 0.15),
+                inset 0 -3px 6px rgba(0, 0, 0, 0.9);
+        }
+
+        /* Ryflowanie klosza poliwęglanowego (linie Fresnela) */
+        .lzn-body::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0.04) 0px,
+                rgba(255, 255, 255, 0.04) 2px,
+                transparent 2px,
+                transparent 5px
+            ),
+            linear-gradient(180deg, rgba(255,255,255,0.16) 0%, transparent 28%, rgba(0,0,0,0.35) 100%);
+            pointer-events: none;
+            z-index: 6;
+        }
+
+        /* Pionowe uszczelki dzielące sekcje kloszy */
+        .lens-section {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 5px;
+            border-right: 2px solid #0b0c0e;
+        }
+        .lens-section:last-child {
+            border-right: none;
+        }
+
+        /* Kolor klosza niebieskiego (sekcje narożne i pośrednie) */
+        .lens-blue-tint {
+            background: linear-gradient(180deg, #0b2247 0%, #071733 50%, #051024 100%);
+        }
+
+        /* Kolor klosza bezbarwnego / przydymionego (sekcje wewnętrzne z lampami roboczymi i PILOTEM) */
+        .lens-clear-tint {
+            background: linear-gradient(180deg, #1d2128 0%, #13161b 50%, #0d0f12 100%);
+        }
+
+        /* Moduł LED MD3 (3 soczewki kolimatorowe w rzędzie) */
+        .md3-module {
+            width: 100%;
+            height: 44px;
+            background: linear-gradient(180deg, #101318 0%, #1c2026 50%, #0e1014 100%);
+            border: 1px solid #2e343d;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+            padding: 0 4px;
+            position: relative;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.9);
+            transition: background 0.04s ease, box-shadow 0.04s ease, border-color 0.04s ease;
+        }
+
+        /* Pojedyncza dioda LED z soczewką */
+        .led-diode {
+            width: 24px;
+            height: 28px;
+            border-radius: 5px;
+            background: radial-gradient(circle at 50% 50%, #4a5568 0%, #1e242d 65%, #0f1318 100%);
+            border: 1px solid #3a424e;
+            box-shadow: inset 0 1px 3px rgba(255,255,255,0.25);
+            position: relative;
+            transition: all 0.04s ease;
+        }
+        .led-diode::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 8px;
+            height: 8px;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background: #2b323c;
+        }
+
+        /* STAN AKTYWNY: Niebieski moduł MD3 */
+        .md3-module.blue-on {
+            background: #0066ff;
+            border-color: #99ccff;
+            box-shadow:
+                0 0 25px 6px rgba(0, 110, 255, 0.95),
+                0 0 55px 15px rgba(0, 80, 255, 0.65),
+                inset 0 0 12px #ffffff;
+            z-index: 5;
+        }
+        .md3-module.blue-on .led-diode {
+            background: radial-gradient(circle, #ffffff 0%, #80bfff 45%, #0066ff 100%);
+            border-color: #ffffff;
+            box-shadow: 0 0 12px #ffffff;
+        }
+        .md3-module.blue-on .led-diode::after {
+            background: #ffffff;
+        }
+
+        /* STAN CRUISE (podświetlenie pozycyjne 25% na przycisku AUX2) */
+        .md3-module.cruise-on:not(.blue-on) {
+            background: rgba(0, 70, 200, 0.35);
+            border-color: #2b6cb0;
+            box-shadow: 0 0 12px rgba(0, 102, 255, 0.45);
+        }
+        .md3-module.cruise-on:not(.blue-on) .led-diode {
+            background: radial-gradient(circle, #90cdf4 0%, #2b6cb0 60%, #1a365d 100%);
+        }
+
+        /* STAN AKTYWNY: Czerwony moduł PILOT (Kogut półpełny) */
+        .md3-module.red-on {
+            background: #ff1a1a;
+            border-color: #ffb3b3;
+            box-shadow:
+                0 0 25px 6px rgba(255, 20, 20, 0.95),
+                0 0 55px 15px rgba(255, 0, 0, 0.65),
+                inset 0 0 12px #ffffff;
+            z-index: 5;
+        }
+        .md3-module.red-on .led-diode {
+            background: radial-gradient(circle, #ffffff 0%, #ff8080 45%, #ff0000 100%);
+            border-color: #ffffff;
+            box-shadow: 0 0 12px #ffffff;
+        }
+        .md3-module.red-on .led-diode::after {
+            background: #ffffff;
+        }
+
+        /* STAN AKTYWNY: Białe lampy robocze (Takedown / Alley) */
+        .work-light {
+            width: 100%;
+            height: 44px;
+            background: linear-gradient(180deg, #16191e 0%, #22262e 50%, #121519 100%);
+            border: 1px solid #383f4b;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+            padding: 0 3px;
+            transition: all 0.1s ease;
+        }
+        .work-light .led-diode {
+            width: 18px;
+            height: 26px;
+        }
+        .work-light .led-diode::after {
+            background: #5a5235;
+        }
+        .work-light.white-on {
+            background: #ffffff;
+            border-color: #ffffff;
+            box-shadow:
+                0 0 30px 10px rgba(255, 255, 255, 0.95),
+                0 0 65px 22px rgba(210, 235, 255, 0.75),
+                inset 0 0 15px #ffffff;
+            z-index: 5;
+        }
+        .work-light.white-on .led-diode {
+            background: radial-gradient(circle, #ffffff 0%, #eef7ff 60%, #cfe8ff 100%);
+            border-color: #ffffff;
+            box-shadow: 0 0 14px #ffffff;
+        }
+        .work-light.white-on .led-diode::after {
+            background: #ffffff;
+        }
+
+        /* Sekcja podwójna (wewnętrzna przednia: Moduł ostrzegawczy + Lampa robocza Takedown) */
+        .inner-split {
+            display: grid;
+            grid-template-columns: 1.45fr 1fr;
+            gap: 5px;
+            width: 100%;
+        }
+        .inner-split.right-side {
+            grid-template-columns: 1fr 1.45fr;
+        }
+
+        /* Środkowy kaseton podświetlany WL (Napis POLICJA) */
+        .center-wl-panel {
+            background: linear-gradient(180deg, #aeb7c2 0%, #cfd6df 50%, #9fa8b5 100%);
+            border-left: 3px solid #0c0d10;
+            border-right: 3px solid #0c0d10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
+        }
+        .center-wl-panel.illuminated {
+            background: radial-gradient(circle, #ffffff 0%, #f0f6ff 70%, #d8e8ff 100%);
+            box-shadow:
+                0 0 28px 4px rgba(255, 255, 255, 0.8),
+                inset 0 0 15px rgba(255, 255, 255, 1);
+            z-index: 4;
+        }
+        .wl-text {
+            font-family: 'Arial Black', Impact, sans-serif;
+            font-size: 23px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #003894;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+            z-index: 7;
+            transition: color 0.15s ease, text-shadow 0.15s ease;
+        }
+        .center-wl-panel.illuminated .wl-text {
+            color: #0044b5;
+            text-shadow: 0 0 8px rgba(0, 102, 255, 0.45);
+        }
+
+        /* Dolny profil aluminiowy belki */
+        .lzn-bottom-rail {
+            width: 98%;
+            height: 14px;
+            background: linear-gradient(180deg, #2b2f36 0%, #17191d 60%, #0d0e11 100%);
+            border-radius: 0 0 10px 10px;
+            border: 1px solid #090a0c;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.7);
+        }
+        .elektra-badge {
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            color: #7c8594;
+            font-weight: bold;
+        }
+
+        /* Stopy montażowe na dach */
+        .lzn-mounts {
+            width: 82%;
+            display: flex;
+            justify-content: space-between;
+        }
+        .mount-foot {
+            width: 86px;
+            height: 22px;
+            background: linear-gradient(90deg, #121316, #262930, #121316);
+            clip-path: polygon(12% 0, 88% 0, 100% 100%, 0 100%);
+            border-bottom: 4px solid #090a0b;
+        }
+
+        /* Panel informacyjny pod belką */
+        .status-bar {
+            margin-top: 38px;
+            background: rgba(20, 22, 26, 0.9);
+            border: 1px solid #282c34;
+            border-radius: 12px;
+            padding: 12px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px 24px;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #8c96a5;
+        }
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #2d323b;
+            transition: all 0.15s ease;
+        }
+        .status-dot.active-blue {
+            background: #0077ff;
+            box-shadow: 0 0 8px #0077ff;
+        }
+        .status-dot.active-red {
+            background: #ff2222;
+            box-shadow: 0 0 8px #ff2222;
+        }
+        .status-dot.active-white {
+            background: #ffffff;
+            box-shadow: 0 0 8px #ffffff;
+        }
+        .status-dot.active-amber {
+            background: #ffaa00;
+            box-shadow: 0 0 8px #ffaa00;
+        }
+
+        /* =========================================================
+           PRAWA STRONA: PILOT FEDERAL SIGNAL AS 422 POLONIA
+           ========================================================= */
+        .remote-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        /* Główna obudowa pilota */
+        .remote {
+            width: 196px;
+            background: linear-gradient(145deg, #323438 0%, #222326 50%, #18191b 100%);
+            padding: 18px 20px 24px 20px;
+            border-radius: 26px;
+            position: relative;
+            box-shadow: 
+                inset 2px 3px 5px rgba(255, 255, 255, 0.18),
+                inset -3px -5px 8px rgba(0, 0, 0, 0.8),
+                0 25px 50px rgba(0, 0, 0, 0.85);
+            border: 1px solid #111;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Wewnętrzne przetłoczenie obudowy */
+        .remote::before {
+            content: "";
+            position: absolute;
+            top: 8px;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            border-radius: 18px;
+            pointer-events: none;
+            box-shadow: 
+                inset 0 2px 6px rgba(0, 0, 0, 0.65),
+                0 1px 1px rgba(255, 255, 255, 0.07);
+        }
+
+        /* Maskownica głośnika na górze (trapez zwężający się w dół) */
+        .speaker-recess {
+            background: linear-gradient(180deg, #1b1c1e 0%, #292a2e 100%);
+            padding: 6px 14px;
+            border-radius: 6px 6px 12px 12px;
+            margin-bottom: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 
+                inset 0 3px 5px rgba(0,0,0,0.9),
+                0 1px 1px rgba(255,255,255,0.1);
+            z-index: 1;
+        }
+
+        .grill-line {
+            background: #09090a;
+            height: 5px;
+            border-radius: 3px;
+            box-shadow: 
+                inset 0 2px 3px #000,
+                0 1px 0 rgba(255,255,255,0.12);
+        }
+        .grill-line:nth-child(1) { width: 68px; }
+        .grill-line:nth-child(2) { width: 58px; }
+        .grill-line:nth-child(3) { width: 48px; }
+
+        /* Panel z gniazdami przycisków */
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 14px;
+            width: 100%;
+            padding: 6px;
+            box-sizing: border-box;
+            z-index: 1;
+        }
+
+        /* Pojedyncze gniazdo (wgłębienie w plastiku) */
+        .btn-well {
+            background: #141517;
+            padding: 4px;
+            border-radius: 10px;
+            box-shadow: 
+                inset 0 3px 6px rgba(0,0,0,0.95),
+                0 1px 1px rgba(255,255,255,0.08);
+        }
+
+        /* Silikonowy przycisk */
+        .btn {
+            background: radial-gradient(circle at 50% 45%, #dce8f2 0%, #c6d4e1 70%, #b3c2d1 100%);
+            height: 62px;
+            width: 100%;
+            border-radius: 7px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-sizing: border-box;
+            border: 1px solid #8e9ba8;
+            box-shadow: 
+                inset 0 2px 3px rgba(255, 255, 255, 0.9),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.22),
+                0 3px 5px rgba(0, 0, 0, 0.7);
+            transition: transform 0.06s ease, background 0.1s ease, box-shadow 0.1s ease;
+            pointer-events: auto;
+            touch-action: none;
+        }
+
+        .btn * {
+            pointer-events: none;
+        }
+
+        .btn:active {
+            transform: scale(0.96) translateY(1px);
+            box-shadow: 
+                inset 0 1px 2px rgba(255, 255, 255, 0.6),
+                0 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Czerwone podświetlenie LED od spodu gumowego przycisku */
+        .btn.active {
+            background: radial-gradient(circle at 50% 50%, #ff4d4d 0%, #e61919 60%, #a80000 100%);
+            border-color: #ff3333;
+            box-shadow: 
+                inset 0 0 10px rgba(255, 200, 200, 0.6),
+                inset 0 -2px 6px rgba(80, 0, 0, 0.8),
+                0 0 16px rgba(255, 30, 30, 0.75);
+        }
+
+        .btn svg {
+            width: 48px;
+            height: 48px;
+            overflow: visible;
+        }
+
+        /* Kolor nadruku na przyciskach */
+        .icon-fill {
+            fill: #2c3036;
+        }
+        .icon-stroke {
+            stroke: #2c3036;
+        }
+        .btn.active .icon-fill {
+            fill: #1a0505;
+        }
+        .btn.active .icon-stroke {
+            stroke: #1a0505;
+        }
+
+        /* Odciążka i przewód na dole pilota */
+        .cable-boot {
+            width: 54px;
+            height: 14px;
+            background: linear-gradient(90deg, #141416, #292a2d, #141416);
+            clip-path: polygon(0 0, 100% 0, 82% 100%, 18% 100%);
+            margin-top: -1px;
+        }
+        .cable {
+            width: 28px;
+            height: 36px;
+            background: linear-gradient(90deg, #0e0e10, #232427, #0b0b0c);
+        }
+
+        /* Responsywność dla mniejszych ekranów (zachowuje układ lewo-prawo ze skalowaniem) */
+        @media (max-width: 980px) {
+            .simulator-layout {
+                padding: 10px 16px;
+                gap: 20px;
+            }
+            .lzn-body {
+                height: 64px;
+                grid-template-columns: 38px 1fr 1.1fr 130px 1.1fr 1fr 38px;
+            }
+            .wl-text {
+                font-size: 16px;
+            }
+            .led-diode {
+                width: 16px;
+                height: 22px;
+            }
+            .remote-wrapper {
+                transform: scale(0.9);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="simulator-layout">
+        <!-- =========================================================
+             LEWA STRONA: BELKA OSTRZEGAWCZA LZN LF SLENDER
+             ========================================================= -->
+        <div class="lightbar-stage">
+            <!-- Poświaty tła -->
+            <div class="ambient-glow ambient-left" id="glow-left"></div>
+            <div class="ambient-glow ambient-right" id="glow-right"></div>
+            <div class="ambient-glow ambient-red" id="glow-red"></div>
+
+            <div class="lzn-wrapper">
+                <!-- Stożki bocznych lamp roboczych (Alley Lights) -->
+                <div class="alley-beam left" id="beam-alley-left"></div>
+                <div class="alley-beam right" id="beam-alley-right"></div>
+
+                <!-- Górna pokrywa -->
+                <div class="lzn-top-cap"></div>
+
+                <!-- Główny klosz belki LZN LF SLENDER -->
+                <div class="lzn-body">
+                    <!-- 1. Lewa lampa robocza boczna (Alley Light L) -->
+                    <div class="lens-section lens-clear-tint">
+                        <div class="work-light" id="mod-alley-l" title="Lampa robocza boczna lewa">
+                            <div class="led-diode"></div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Lewy zewnętrzny moduł ostrzegawczy MD3 (Niebieski) -->
+                    <div class="lens-section lens-blue-tint">
+                        <div class="md3-module" id="mod-blue-l1" title="Moduł MD3 Niebieski L1">
+                            <div class="led-diode"></div>
+                            <div class="led-diode"></div>
+                            <div class="led-diode"></div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Lewa sekcja wewnętrzna: Moduł Czerwony PILOT / Niebieski + Przednia lampa robocza (Takedown L) -->
+                    <div class="lens-section lens-clear-tint">
+                        <div class="inner-split">
+                            <!-- Moduł Czerwony "PILOT" / Niebieski wewnętrzny -->
+                            <div class="md3-module" id="mod-pilot-l2" title="Moduł MD3 Czerwony PILOT / Niebieski">
+                                <div class="led-diode"></div>
+                                <div class="led-diode"></div>
+                                <div class="led-diode"></div>
+                            </div>
+                            <!-- Przedni reflektor roboczy lewy -->
+                            <div class="work-light" id="mod-takedown-l" title="Przednia lampa robocza lewa">
+                                <div class="led-diode"></div>
+                                <div class="led-diode"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Środkowy podświetlany kaseton WL (kliknij, aby zmienić napis) -->
+                    <div class="center-wl-panel" id="mod-wl-panel" onclick="cycleWlText()" title="Kliknij, aby zmienić napis na kasetonie">
+                        <span class="wl-text" id="wl-text-content">POLICJA</span>
+                    </div>
+
+                    <!-- 5. Prawa sekcja wewnętrzna: Przednia lampa robocza (Takedown R) + Moduł MD3 Niebieski -->
+                    <div class="lens-section lens-clear-tint">
+                        <div class="inner-split right-side">
+                            <!-- Przedni reflektor roboczy prawy -->
+                            <div class="work-light" id="mod-takedown-r" title="Przednia lampa robocza prawa">
+                                <div class="led-diode"></div>
+                                <div class="led-diode"></div>
+                            </div>
+                            <!-- Prawy wewnętrzny moduł ostrzegawczy MD3 (Niebieski) -->
+                            <div class="md3-module" id="mod-blue-r2" title="Moduł MD3 Niebieski P2">
+                                <div class="led-diode"></div>
+                                <div class="led-diode"></div>
+                                <div class="led-diode"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. Prawy zewnętrzny moduł ostrzegawczy MD3 (Niebieski) -->
+                    <div class="lens-section lens-blue-tint">
+                        <div class="md3-module" id="mod-blue-r1" title="Moduł MD3 Niebieski P1">
+                            <div class="led-diode"></div>
+                            <div class="led-diode"></div>
+                            <div class="led-diode"></div>
+                        </div>
+                    </div>
+
+                    <!-- 7. Prawa lampa robocza boczna (Alley Light R) -->
+                    <div class="lens-section lens-clear-tint">
+                        <div class="work-light" id="mod-alley-r" title="Lampa robocza boczna prawa">
+                            <div class="led-diode"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dolna szyna aluminiowa i uchwyty dachowe -->
+                <div class="lzn-bottom-rail">
+                    <span class="elektra-badge">ELEKTRA LZN-LF SLENDER</span>
+                    <span class="elektra-badge">ECE R65 / R10</span>
+                </div>
+                <div class="lzn-mounts">
+                    <div class="mount-foot"></div>
+                    <div class="mount-foot"></div>
+                </div>
+            </div>
+
+            <!-- Pasek stanu aktywnych funkcji -->
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-dot" id="st-blue"></div>
+                    <span>Główne LED (MD3)</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" id="st-red"></div>
+                    <span>Pilot (Czerwony)</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" id="st-takedown"></div>
+                    <span>Robocze Przód</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" id="st-alley"></div>
+                    <span>Robocze Boki</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" id="st-wl"></div>
+                    <span>Kaseton WL</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" id="st-siren"></div>
+                    <span id="st-siren-label">Syrena: WYŁ</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- =========================================================
+             PRAWA STRONA: PILOT FEDERAL SIGNAL AS 422 POLONIA
+             ========================================================= -->
+        <div class="remote-wrapper">
+            <div class="remote">
+                <!-- Maskownica głośnika -->
+                <div class="speaker-recess">
+                    <div class="grill-line"></div>
+                    <div class="grill-line"></div>
+                    <div class="grill-line"></div>
+                </div>
+
+                <div class="button-grid">
+                    <!-- Rząd 1: OFF | Mikrofon -->
+                    <div class="btn-well">
+                        <div class="btn" id="btn-off" onclick="turnOffAll()">
+                            <svg viewBox="0 0 60 60">
+                                <text x="30" y="41" text-anchor="middle" class="icon-fill" font-family="Arial, sans-serif" font-weight="bold" font-size="31" textLength="46" lengthAdjust="spacingAndGlyphs">OFF</text>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="btn-well">
+                        <div class="btn" id="btn-radio" onclick="toggleLightBtn('btn-radio')">
+                            <svg viewBox="0 0 60 60">
+                                <g transform="translate(25, 26) rotate(-32)">
+                                    <rect x="-13" y="-10" width="24" height="19" rx="3" fill="none" class="icon-stroke" stroke-width="2.6"/>
+                                    <path d="M-10,-10 L-10,9" class="icon-stroke" stroke-width="1.8"/>
+                                    <circle cx="0" cy="-0.5" r="5.5" fill="none" class="icon-stroke" stroke-width="2.2"/>
+                                    <circle cx="0" cy="-0.5" r="2" class="icon-fill"/>
+                                    <rect x="-2" y="-13" width="6" height="3" rx="1" class="icon-fill"/>
+                                </g>
+                                <path d="M35,33 C38,31 40,35 37,37 C40,36 43,39 40,42 C43,41 46,44 43,46 L48,48" fill="none" class="icon-stroke" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Rząd 2: Dwie nutki | AH -->
+                    <div class="btn-well">
+                        <div class="btn" id="btn-siren" onclick="toggleSiren()">
+                            <svg viewBox="0 0 60 60">
+                                <g transform="translate(19, 25) rotate(-12)">
+                                    <ellipse cx="-4" cy="7" rx="5.5" ry="3.8" transform="rotate(-20 -4 7)" class="icon-fill"/>
+                                    <path d="M0.5,6 L0.5,-11 C5,-8 8,-4 7,2" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </g>
+                                <g transform="translate(41, 36) rotate(8)">
+                                    <ellipse cx="-4" cy="7" rx="5.5" ry="3.8" transform="rotate(-20 -4 7)" class="icon-fill"/>
+                                    <path d="M0.5,6 L0.5,-11 C5,-8 8,-4 7,2" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="btn-well">
+                        <div class="btn" id="btn-ah">
+                            <svg viewBox="0 0 60 60">
+                                <text x="30" y="41" text-anchor="middle" class="icon-fill" font-family="Arial, sans-serif" font-weight="bold" font-size="32" textLength="38" lengthAdjust="spacingAndGlyphs">AH</text>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Rząd 3: Kogut pusty | Kogut półpełny -->
+                    <div class="btn-well">
+                        <div class="btn" id="btn-light1" onclick="toggleLightBtn('btn-light1')">
+                            <svg viewBox="0 0 60 60">
+                                <rect x="15" y="42" width="30" height="6" rx="2" class="icon-fill"/>
+                                <path d="M19,42 L20,23 C20,14 40,14 40,23 L41,42 Z" fill="none" class="icon-stroke" stroke-width="3.2" stroke-linejoin="round"/>
+                                <line x1="8" y1="16" x2="15" y2="20" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                <line x1="7" y1="26" x2="14" y2="27" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                <line x1="8" y1="36" x2="15" y2="34" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                <line x1="52" y1="16" x2="45" y2="20" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                <line x1="53" y1="26" x2="46" y2="27" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                <line x1="52" y1="36" x2="45" y2="34" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="btn-well">
+                        <div class="btn" id="btn-light2" onclick="toggleLightBtn('btn-light2')">
+                            <svg viewBox="0 0 60 60">
+                                <rect x="15" y="42" width="30" height="6" rx="2" class="icon-fill"/>
+                                <path d="M19,42 L20,23 C20,14 40,14 40,23 L41,42 Z" fill="none" class="icon-stroke" stroke-width="3.2" stroke-linejoin="round"/>
+                                <path d="M30,16.2 C35.5,16.2 40,18.5 40,23 L41,42 L30,42 Z" class="icon-fill"/>
+                                <line x1="8" y1="16" x2="15" y2="20" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                <line x1="7" y1="26" x2="14" y2="27" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                <line x1="8" y1="36" x2="15" y2="34" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                <line x1="52" y1="16" x2="45" y2="20" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                <line x1="53" y1="26" x2="46" y2="27" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                <line x1="52" y1="36" x2="45" y2="34" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Rząd 4: Dwa reflektory w górę | Dwa reflektory do środka -->
+                    <div class="btn-well">
+                        <div class="btn" id="btn-grill1" onclick="toggleLightBtn('btn-grill1')">
+                            <svg viewBox="0 0 60 60">
+                                <path d="M7,31 A10,9.5 0 0,0 27,31 Z" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linejoin="round"/>
+                                <line x1="12" y1="20" x2="12" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                                <line x1="17" y1="20" x2="17" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                                <line x1="22" y1="20" x2="22" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+
+                                <path d="M33,31 A10,9.5 0 0,0 53,31 Z" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linejoin="round"/>
+                                <line x1="38" y1="20" x2="38" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                                <line x1="43" y1="20" x2="43" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                                <line x1="48" y1="20" x2="48" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="btn-well">
+                        <div class="btn" id="btn-grill2" onclick="toggleLightBtn('btn-grill2')">
+                            <svg viewBox="0 0 60 60">
+                                <path d="M16,20 A10,10 0 0,1 16,40 Z" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linejoin="round"/>
+                                <line x1="6" y1="24" x2="12" y2="24" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                                <line x1="6" y1="30" x2="12" y2="30" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                                <line x1="6" y1="36" x2="12" y2="36" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+
+                                <path d="M44,20 A10,10 0 0,0 44,40 Z" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linejoin="round"/>
+                                <line x1="48" y1="24" x2="54" y2="24" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                                <line x1="48" y1="30" x2="54" y2="30" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                                <line x1="48" y1="36" x2="54" y2="36" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Rząd 5: Lampka sufitowa | Pusty przycisk -->
+                    <div class="btn-well">
+                        <div class="btn" id="btn-aux1" onclick="toggleLightBtn('btn-aux1')">
+                            <svg viewBox="0 0 60 60">
+                                <line x1="16" y1="20" x2="44" y2="20" class="icon-stroke" stroke-width="3.6" stroke-linecap="round"/>
+                                <path d="M21,21 A9,7.5 0 0,0 39,21 Z" fill="none" class="icon-stroke" stroke-width="2.8"/>
+                                <line x1="18" y1="31" x2="15" y2="34" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                <line x1="12" y1="37" x2="9" y2="40" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                <line x1="24" y1="33" x2="22" y2="37" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                <line x1="20" y1="41" x2="18" y2="44" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                <line x1="30" y1="34" x2="30" y2="38" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                <line x1="30" y1="42" x2="30" y2="46" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                <line x1="36" y1="33" x2="38" y2="37" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                <line x1="40" y1="41" x2="42" y2="44" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                <line x1="42" y1="31" x2="45" y2="34" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                <line x1="48" y1="37" x2="51" y2="40" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="btn-well">
+                        <div class="btn" id="btn-aux2" onclick="toggleLightBtn('btn-aux2')">
+                            <div class="led-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Przewód wychodzący z dołu pilota -->
+            <div class="cable-boot"></div>
+            <div class="cable"></div>
+        </div>
+    </div>
+
+    <script>
+        // Blokada menu kontekstowego przy długim przytrzymaniu palca na ekranie dotykowym
+        window.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+
+        // =========================================================================
+        // 1. SYSTEM AUDIO (Oryginalny silnik AS 422 Polonia)
+        // =========================================================================
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+        let initPromise = null;
+        const audioBuffers = {};
+        const loopPoints = {}; 
+        
+        let isSirenActive = false;
+        let isAhPressed = false;
+        let currentModIndex = 0;
+        const sirenModes = ['wilk', 'pies', 'leon', 'priority']; 
+        const sirenNames = {
+            'wilk': 'Wail (Wilk)',
+            'pies': 'Yelp (Pies)',
+            'leon': 'Hi-Lo (Leon)',
+            'priority': 'Priority'
+        };
+
+        let currentSirenSource = null;
+        let currentHornSource = null;
+
+        // Korektor głośności dla poszczególnych ścieżek
+        const volumes = {
+            'wilk': 1.0,
+            'pies': 1.0,
+            'leon': 1.0,
+            'priority': 2.5,
+            'horn': 3.0
+        };
+
+        /**
+         * Wyznacza punkty bezszwowej pętli dla dźwięków 'priority' oraz 'horn'
+         */
+        function findSeamlessLoopPoints(buffer) {
+            const data = buffer.getChannelData(0);
+            const sr = buffer.sampleRate;
+            const winSize = Math.floor(sr * 0.02);
+            const numWins = Math.floor(data.length / winSize);
+
+            if (numWins < 10) {
+                return { start: 0, end: buffer.duration };
+            }
+
+            const rms = new Float32Array(numWins);
+            let maxRms = 0;
+            for (let w = 0; w < numWins; w++) {
+                let sum = 0;
+                const offset = w * winSize;
+                for (let i = 0; i < winSize; i++) {
+                    const v = data[offset + i];
+                    sum += v * v;
+                }
+                rms[w] = Math.sqrt(sum / winSize);
+                if (rms[w] > maxRms) maxRms = rms[w];
+            }
+
+            const threshold = maxRms * 0.45;
+            let firstWin = 0;
+            let lastWin = numWins - 1;
+            while (firstWin < numWins && rms[firstWin] < threshold) firstWin++;
+            while (lastWin > firstWin && rms[lastWin] < threshold) lastWin--;
+
+            let startSample = firstWin * winSize;
+            let endSample = (lastWin + 1) * winSize;
+
+            const activeLen = endSample - startSample;
+            const margin = Math.min(Math.floor(sr * 0.2), Math.floor(activeLen * 0.12));
+            startSample += margin;
+            endSample -= margin;
+
+            const crossings = [];
+            for (let i = startSample; i < endSample; i++) {
+                if (data[i - 1] < 0 && data[i] >= 0) {
+                    crossings.push(i);
+                }
+            }
+
+            if (crossings.length < 80) {
+                return { start: startSample / sr, end: endSample / sr };
+            }
+
+            const numCycles = 25;
+            const startIdx = crossings[0];
+            const targetPeriods = [];
+            for (let k = 0; k < numCycles; k++) {
+                targetPeriods.push(crossings[k + 1] - crossings[k]);
+            }
+
+            const searchStartC = Math.floor(crossings.length * 0.55);
+            const searchEndC = crossings.length - numCycles - 1;
+            let bestEndIdx = crossings[searchEndC];
+            let bestScore = Infinity;
+
+            for (let c = searchStartC; c <= searchEndC; c++) {
+                let score = 0;
+                for (let k = 0; k < numCycles; k++) {
+                    const period = crossings[c + k + 1] - crossings[c + k];
+                    const diff = period - targetPeriods[k];
+                    score += diff * diff;
+                }
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestEndIdx = crossings[c];
+                }
+            }
+
+            return {
+                start: startIdx / sr,
+                end: bestEndIdx / sr
+            };
+        }
+
+        async function loadSoundFile(name, extensions) {
+            for (const ext of extensions) {
+                const url = `${name}.${ext}`;
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) continue;
+                    const arrayBuffer = await response.arrayBuffer();
+                    const buffer = await audioCtx.decodeAudioData(arrayBuffer);
+                    audioBuffers[name] = buffer;
+
+                    if (name === 'priority' || name === 'horn') {
+                        loopPoints[name] = findSeamlessLoopPoints(buffer);
+                    }
+                    return;
+                } catch (e) {}
+            }
+            console.error(`Nie znaleziono pliku audio dla: ${name}`);
+        }
+
+        async function initAudioSystem() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (!initPromise) {
+                initPromise = Promise.all([
+                    loadSoundFile('wilk', ['mp3', 'wav']),
+                    loadSoundFile('pies', ['mp3', 'wav']),
+                    loadSoundFile('leon', ['mp3', 'wav']),
+                    loadSoundFile('priority', ['wav', 'mp3']),
+                    loadSoundFile('horn', ['wav', 'mp3'])
+                ]);
+            }
+            await initPromise;
+        }
+
+        function playBuffer(bufferName, loop = true) {
+            if (!audioCtx || !audioBuffers[bufferName]) return null;
+            
+            const source = audioCtx.createBufferSource();
+            source.buffer = audioBuffers[bufferName];
+            source.loop = loop;
+
+            const gainNode = audioCtx.createGain();
+            gainNode.gain.value = volumes[bufferName] || 1.0;
+            
+            source.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            const pts = loopPoints[bufferName];
+            if (loop && pts) {
+                source.loopStart = pts.start;
+                source.loopEnd = pts.end;
+                source.start(0, pts.start);
+            } else {
+                source.start(0);
+            }
+            
+            return source;
+        }
+
+        // --- OBSŁUGA SYRENY (Nutki) ---
+        async function toggleSiren() {
+            await initAudioSystem();
+            if (audioCtx.state === 'suspended') await audioCtx.resume();
+            
+            const btnSiren = document.getElementById('btn-siren');
+
+            if (!isSirenActive) {
+                isSirenActive = true;
+                currentModIndex = 0; 
+                btnSiren.classList.add('active');
+                
+                if (currentSirenSource) {
+                    try { currentSirenSource.stop(); } catch(e){}
+                }
+                
+                if (!isAhPressed) {
+                    currentSirenSource = playBuffer(sirenModes[currentModIndex]);
+                }
+            } else {
+                if (currentSirenSource) {
+                    try { currentSirenSource.stop(); } catch(e){}
+                    currentSirenSource = null;
+                }
+                
+                currentModIndex = (currentModIndex + 1) % sirenModes.length;
+                
+                if (!isAhPressed) {
+                    currentSirenSource = playBuffer(sirenModes[currentModIndex]);
+                }
+            }
+            updateStatusBar();
+        }
+
+        // --- OBSŁUGA AIR HORN ---
+        const btnAh = document.getElementById('btn-ah');
+
+        btnAh.addEventListener('touchstart', startAirHorn, { passive: false });
+        btnAh.addEventListener('touchend', stopAirHorn, { passive: false });
+        btnAh.addEventListener('touchcancel', stopAirHorn, { passive: false });
+
+        btnAh.addEventListener('pointerdown', startAirHorn);
+        btnAh.addEventListener('pointerup', stopAirHorn);
+        btnAh.addEventListener('pointerleave', stopAirHorn);
+        btnAh.addEventListener('pointercancel', stopAirHorn);
+
+        async function startAirHorn(e) {
+            if (e && e.cancelable) e.preventDefault();
+            if (isAhPressed) return;
+            isAhPressed = true;
+            
+            await initAudioSystem();
+            if (audioCtx.state === 'suspended') await audioCtx.resume();
+            
+            btnAh.classList.add('active');
+
+            if (currentSirenSource) {
+                try { currentSirenSource.stop(); } catch(e){}
+                currentSirenSource = null;
+            }
+
+            if (currentHornSource) {
+                try { currentHornSource.stop(); } catch(e){}
+            }
+            currentHornSource = playBuffer('horn', true);
+            updateStatusBar();
+        }
+
+        function stopAirHorn(e) {
+            if (e && e.cancelable) e.preventDefault();
+            if (!isAhPressed) return;
+            isAhPressed = false;
+            
+            btnAh.classList.remove('active');
+
+            if (currentHornSource) {
+                try { currentHornSource.stop(); } catch(e){}
+                currentHornSource = null;
+            }
+
+            if (isSirenActive && audioCtx) {
+                if (currentSirenSource) {
+                    try { currentSirenSource.stop(); } catch(e){}
+                }
+                currentSirenSource = playBuffer(sirenModes[currentModIndex]);
+            }
+            updateStatusBar();
+        }
+
+        // =========================================================================
+        // 2. STEROWNIK OŚWIETLENIA BELKI ELEKTRA LZN LF SLENDER
+        // =========================================================================
+        const modBlueL1     = document.getElementById('mod-blue-l1');
+        const modPilotL2    = document.getElementById('mod-pilot-l2');
+        const modBlueR2     = document.getElementById('mod-blue-r2');
+        const modBlueR1     = document.getElementById('mod-blue-r1');
+        const modTakedownL  = document.getElementById('mod-takedown-l');
+        const modTakedownR  = document.getElementById('mod-takedown-r');
+        const modAlleyL     = document.getElementById('mod-alley-l');
+        const modAlleyR     = document.getElementById('mod-alley-r');
+        const modWlPanel    = document.getElementById('mod-wl-panel');
+        const beamAlleyLeft = document.getElementById('beam-alley-left');
+        const beamAlleyRight= document.getElementById('beam-alley-right');
+        const glowLeft      = document.getElementById('glow-left');
+        const glowRight     = document.getElementById('glow-right');
+        const glowRed       = document.getElementById('glow-red');
+
+        // Napisy na centralnym kasetonie WL
+        const wlTexts = ['POLICJA', 'STRAŻ', 'AMBULANS', ' SŁUŻBA '];
+        let wlTextIdx = 0;
+        function cycleWlText() {
+            wlTextIdx = (wlTextIdx + 1) % wlTexts.length;
+            document.getElementById('wl-text-content').textContent = wlTexts[wlTextIdx];
+        }
+
+        // Stan przycisków oświetlenia
+        const lightState = {
+            blueMain: false,   // btn-light1 (Kogut pusty - główne niebieskie MD3)
+            redPilot: false,   // btn-light2 (Kogut półpełny - czerwony moduł PILOT)
+            takedown: false,   // btn-grill1 (Reflektory w górę - robocze przednie)
+            alley: false,      // btn-grill2 (Reflektory na boki - robocze boczne)
+            wlPanel: false,    // btn-aux1   (Lampka sufitowa - podświetlenie kasetonu WL)
+            cruise: false,     // btn-aux2   (Pusty przycisk - tryb Cruise / zmiana wzoru)
+            radio: false       // btn-radio  (Mikrofon)
+        };
+
+        // --- OBSŁUGA ŚWIATEŁ ---
+        function toggleLightBtn(id) {
+            const btn = document.getElementById(id);
+            const isActive = btn.classList.toggle('active');
+
+            switch (id) {
+                case 'btn-light1':
+                    lightState.blueMain = isActive;
+                    break;
+                case 'btn-light2':
+                    lightState.redPilot = isActive;
+                    break;
+                case 'btn-grill1':
+                    lightState.takedown = isActive;
+                    break;
+                case 'btn-grill2':
+                    lightState.alley = isActive;
+                    break;
+                case 'btn-aux1':
+                    lightState.wlPanel = isActive;
+                    break;
+                case 'btn-aux2':
+                    lightState.cruise = isActive;
+                    break;
+                case 'btn-radio':
+                    lightState.radio = isActive;
+                    break;
+            }
+
+            applyStaticLights();
+            updateStatusBar();
+        }
+
+        // --- OBSŁUGA PRZYCISKU OFF ---
+        function turnOffAll() {
+            isSirenActive = false;
+            isAhPressed = false;
+            
+            if (currentSirenSource) {
+                try { currentSirenSource.stop(); } catch(e){}
+                currentSirenSource = null;
+            }
+            if (currentHornSource) {
+                try { currentHornSource.stop(); } catch(e){}
+                currentHornSource = null;
+            }
+            
+            document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
+
+            Object.keys(lightState).forEach(k => lightState[k] = false);
+            applyStaticLights();
+            clearFlashingModules();
+            updateStatusBar();
+        }
+
+        // Aktualizacja świateł ciągłych (Robocze przód, Robocze boki, Kaseton WL, Cruise)
+        function applyStaticLights() {
+            // Przednie lampy robocze (Takedown)
+            modTakedownL.classList.toggle('white-on', lightState.takedown);
+            modTakedownR.classList.toggle('white-on', lightState.takedown);
+
+            // Boczne lampy robocze (Alley Lights)
+            modAlleyL.classList.toggle('white-on', lightState.alley);
+            modAlleyR.classList.toggle('white-on', lightState.alley);
+            beamAlleyLeft.classList.toggle('on', lightState.alley);
+            beamAlleyRight.classList.toggle('on', lightState.alley);
+
+            // Podświetlenie kasetonu WL (POLICJA)
+            modWlPanel.classList.toggle('illuminated', lightState.wlPanel);
+
+            // Tryb Cruise (stałe podświetlenie narożnych modułów niebieskich)
+            modBlueL1.classList.toggle('cruise-on', lightState.cruise);
+            modBlueR1.classList.toggle('cruise-on', lightState.cruise);
+        }
+
+        function clearFlashingModules() {
+            modBlueL1.classList.remove('blue-on');
+            modPilotL2.classList.remove('blue-on', 'red-on');
+            modBlueR2.classList.remove('blue-on');
+            modBlueR1.classList.remove('blue-on');
+            glowLeft.style.opacity = '0';
+            glowRight.style.opacity = '0';
+            glowRed.style.opacity = '0';
+        }
+
+        function updateStatusBar() {
+            document.getElementById('st-blue').className = 'status-dot' + (lightState.blueMain ? ' active-blue' : '');
+            document.getElementById('st-red').className = 'status-dot' + (lightState.redPilot ? ' active-red' : '');
+            document.getElementById('st-takedown').className = 'status-dot' + (lightState.takedown ? ' active-white' : '');
+            document.getElementById('st-alley').className = 'status-dot' + (lightState.alley ? ' active-white' : '');
+            document.getElementById('st-wl').className = 'status-dot' + (lightState.wlPanel ? ' active-white' : '');
+
+            const stSiren = document.getElementById('st-siren');
+            const stLabel = document.getElementById('st-siren-label');
+            if (isAhPressed) {
+                stSiren.className = 'status-dot active-amber';
+                stLabel.textContent = 'Syrena: AIR HORN';
+            } else if (isSirenActive) {
+                stSiren.className = 'status-dot active-amber';
+                stLabel.textContent = 'Syrena: ' + sirenNames[sirenModes[currentModIndex]];
+            } else {
+                stSiren.className = 'status-dot';
+                stLabel.textContent = 'Syrena: WYŁ';
+            }
+        }
+
+        // =========================================================================
+        // 3. GENERATOR BŁYSKÓW ECE R65 (Potrójny błysk 2.1 Hz dla modułów MD3)
+        // =========================================================================
+        // Cykl 480 ms (~2.1 Hz) podzielony na 12 kroków po 40 ms:
+        // Krok 0, 2, 4 -> Potrójny błysk strony LEWEJ (Faza A)
+        // Krok 6, 8, 10 -> Potrójny błysk strony PRAWEJ (Faza B)
+        let flashStep = 0;
+
+        setInterval(() => {
+            if (!lightState.blueMain && !lightState.redPilot) {
+                clearFlashingModules();
+                return;
+            }
+
+            const isPhaseA = (flashStep === 0 || flashStep === 2 || flashStep === 4);
+            const isPhaseB = (flashStep === 6 || flashStep === 8 || flashStep === 10);
+
+            // --- GŁÓWNE ŚWIATŁA NIEBIESKIE (MD3) ---
+            if (lightState.blueMain) {
+                if (!lightState.cruise) {
+                    // Standardowy naprzemienny 3-błysk Elektra (Lewa <-> Prawa)
+                    modBlueL1.classList.toggle('blue-on', isPhaseA);
+                    modBlueR1.classList.toggle('blue-on', isPhaseB);
+                    modBlueR2.classList.toggle('blue-on', isPhaseB);
+
+                    // Jeśli czerwony PILOT nie jest włączony, lewy wewnętrzny moduł miga na niebiesko
+                    if (!lightState.redPilot) {
+                        modPilotL2.classList.remove('red-on');
+                        modPilotL2.classList.toggle('blue-on', isPhaseA);
+                    }
+                    glowLeft.style.opacity = isPhaseA ? '1' : '0';
+                    glowRight.style.opacity = isPhaseB ? '1' : '0';
+                } else {
+                    // Wzór krzyżowy (Zewnętrzne <-> Wewnętrzne) gdy aktywny przycisk AUX2
+                    modBlueL1.classList.toggle('blue-on', isPhaseA);
+                    modBlueR1.classList.toggle('blue-on', isPhaseA);
+                    modBlueR2.classList.toggle('blue-on', isPhaseB);
+
+                    if (!lightState.redPilot) {
+                        modPilotL2.classList.remove('red-on');
+                        modPilotL2.classList.toggle('blue-on', isPhaseB);
+                    }
+                    glowLeft.style.opacity = (isPhaseA || isPhaseB) ? '0.85' : '0';
+                    glowRight.style.opacity = (isPhaseA || isPhaseB) ? '0.85' : '0';
+                }
+            } else {
+                modBlueL1.classList.remove('blue-on');
+                modBlueR1.classList.remove('blue-on');
+                modBlueR2.classList.remove('blue-on');
+                modPilotL2.classList.remove('blue-on');
+                glowLeft.style.opacity = '0';
+                glowRight.style.opacity = '0';
+            }
+
+            // --- ŚWIATŁO CZERWONE "PILOT" (moduł wewnętrzny L2) ---
+            if (lightState.redPilot) {
+                modPilotL2.classList.remove('blue-on');
+                modPilotL2.classList.toggle('red-on', isPhaseA);
+                glowRed.style.opacity = isPhaseA ? '1' : '0';
+            } else {
+                modPilotL2.classList.remove('red-on');
+                glowRed.style.opacity = '0';
+            }
+
+            flashStep = (flashStep + 1) % 12;
+        }, 40);
+    </script>
+</body>
+</html>
