@@ -65,7 +65,7 @@
             filter: blur(65px);
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.05s ease;
+            transition: opacity 0.06s ease;
             z-index: 0;
         }
         .ambient-left {
@@ -209,7 +209,7 @@
             justify-content: space-evenly;
             padding: 0 4px;
             position: relative;
-            transition: background 0.04s ease, box-shadow 0.04s ease, border-color 0.04s ease;
+            transition: background 0.05s ease, box-shadow 0.05s ease, border-color 0.05s ease;
         }
 
         /* Wygląd spoczynkowy modułu pod niebieskim kloszem */
@@ -232,7 +232,7 @@
             height: 28px;
             border-radius: 5px;
             position: relative;
-            transition: all 0.04s ease;
+            transition: all 0.05s ease;
         }
         .lens-blue-tint .led-diode {
             background: radial-gradient(circle at 50% 50%, #2b579a 0%, #122952 65%, #08152e 100%);
@@ -279,6 +279,23 @@
         }
         .md3-module.blue-on .led-diode::after {
             background: #ffffff !important;
+        }
+
+        /* STAN CRUISE (podświetlenie postojowe włączane prawym dolnym przyciskiem) */
+        .md3-module.cruise-on:not(.blue-on) {
+            background: rgba(0, 95, 255, 0.48) !important;
+            border-color: #55aaff !important;
+            box-shadow:
+                0 0 16px 3px rgba(0, 110, 255, 0.6),
+                inset 0 0 6px rgba(200, 230, 255, 0.5) !important;
+        }
+        .md3-module.cruise-on:not(.blue-on) .led-diode {
+            background: radial-gradient(circle, #cce6ff 0%, #2b7fff 55%, #10397a 100%) !important;
+            border-color: #80bfff !important;
+            box-shadow: 0 0 6px rgba(128, 191, 255, 0.7) !important;
+        }
+        .md3-module.cruise-on:not(.blue-on) .led-diode::after {
+            background: #d9ecff !important;
         }
 
         /* STAN AKTYWNY: Czerwony moduł PILOT (pod czerwonym kloszem) */
@@ -743,6 +760,10 @@
                     <span>Kaseton WL</span>
                 </div>
                 <div class="status-item">
+                    <div class="status-dot" id="st-cruise"></div>
+                    <span>Postojowe (Cruise)</span>
+                </div>
+                <div class="status-item">
                     <div class="status-dot" id="st-siren"></div>
                     <span id="st-siren-label">Syrena: WYŁ</span>
                 </div>
@@ -875,7 +896,7 @@
                         </div>
                     </div>
 
-                    <!-- Rząd 5: Lampka sufitowa | Pusty przycisk -->
+                    <!-- Rząd 5: Lampka sufitowa | Pusty przycisk (Podświetlenie postojowe) -->
                     <div class="btn-well">
                         <div class="btn" id="btn-aux1" onclick="toggleLightBtn('btn-aux1')">
                             <svg viewBox="0 0 60 60">
@@ -1219,7 +1240,7 @@
             takedown: false,   // btn-grill1 (Reflektory w górę - robocze przednie)
             alley: false,      // btn-grill2 (Reflektory na boki - robocze boczne)
             wlPanel: false,    // btn-aux1   (Lampka sufitowa - podświetlenie kasetonu POLICJA)
-            redSync: false,    // btn-aux2   (Pusty przycisk - zmiana synchronizacji czerwonego światła)
+            cruise: false,     // btn-aux2   (Prawy dolny przycisk - podświetlenie postojowe Cruise)
             radio: false       // btn-radio  (Mikrofon)
         };
 
@@ -1245,7 +1266,7 @@
                     lightState.wlPanel = isActive;
                     break;
                 case 'btn-aux2':
-                    lightState.redSync = isActive;
+                    lightState.cruise = isActive;
                     break;
                 case 'btn-radio':
                     lightState.radio = isActive;
@@ -1278,7 +1299,7 @@
             updateStatusBar();
         }
 
-        // Aktualizacja świateł ciągłych (Robocze przód, Robocze boki, Kaseton WL)
+        // Aktualizacja świateł ciągłych (Robocze przód, Robocze boki, Kaseton WL, Postojowe Cruise)
         function applyStaticLights() {
             // Przednie lampy robocze (Takedown)
             modTakedownL.classList.toggle('white-on', lightState.takedown);
@@ -1292,6 +1313,16 @@
 
             // Podświetlenie kasetonu WL (POLICJA)
             modWlPanel.classList.toggle('illuminated', lightState.wlPanel);
+
+            // Podświetlenie postojowe (Cruise) na modułach niebieskich
+            modBlueL1.classList.toggle('cruise-on', lightState.cruise);
+            modBlueL2.classList.toggle('cruise-on', lightState.cruise);
+            modBlueR1.classList.toggle('cruise-on', lightState.cruise);
+
+            if (!lightState.blueMain) {
+                glowLeft.style.opacity = lightState.cruise ? '0.28' : '0';
+                glowRight.style.opacity = lightState.cruise ? '0.28' : '0';
+            }
         }
 
         function clearFlashingModules() {
@@ -1299,8 +1330,8 @@
             modBlueL2.classList.remove('blue-on');
             modBlueR1.classList.remove('blue-on');
             modPilotRed.classList.remove('red-on');
-            glowLeft.style.opacity = '0';
-            glowRight.style.opacity = '0';
+            glowLeft.style.opacity = lightState.cruise ? '0.28' : '0';
+            glowRight.style.opacity = lightState.cruise ? '0.28' : '0';
             glowRed.style.opacity = '0';
         }
 
@@ -1310,6 +1341,7 @@
             document.getElementById('st-takedown').className = 'status-dot' + (lightState.takedown ? ' active-white' : '');
             document.getElementById('st-alley').className = 'status-dot' + (lightState.alley ? ' active-white' : '');
             document.getElementById('st-wl').className = 'status-dot' + (lightState.wlPanel ? ' active-white' : '');
+            document.getElementById('st-cruise').className = 'status-dot' + (lightState.cruise ? ' active-blue' : '');
 
             const stSiren = document.getElementById('st-siren');
             const stLabel = document.getElementById('st-siren-label');
@@ -1326,50 +1358,52 @@
         }
 
         // =========================================================================
-        // 3. GENERATOR BŁYSKÓW ECE R65 (Potrójny błysk 2.1 Hz dla modułów MD3)
+        // 3. GENERATORY BŁYSKÓW (Osobny wolniejszy zegar dla niebieskich i szybki dla czerwonego)
         // =========================================================================
-        let flashStep = 0;
+
+        // --- A. ZEGAR ŚWIATEŁ NIEBIESKICH (Zwolniony do tempa z filmu: 75 ms / krok) ---
+        // Dwa lewe niebieskie moduły (L1 i L2) zawsze świecą razem w Fazie A,
+        // naprzemiennie z prawym modułem niebieskim (R1) w Fazie B.
+        let blueFlashStep = 0;
 
         setInterval(() => {
-            if (!lightState.blueMain && !lightState.redPilot) {
-                clearFlashingModules();
-                return;
-            }
-
-            const isPhaseA = (flashStep === 0 || flashStep === 2 || flashStep === 4);
-            const isPhaseB = (flashStep === 6 || flashStep === 8 || flashStep === 10);
-
-            // --- GŁÓWNE ŚWIATŁA NIEBIESKIE (MD3) ---
-            // Dwa lewe niebieskie moduły (L1 i L2) zawsze świecą razem w Fazie A,
-            // natomiast prawy moduł niebieski (R1) w Fazie B.
-            if (lightState.blueMain) {
-                modBlueL1.classList.toggle('blue-on', isPhaseA);
-                modBlueL2.classList.toggle('blue-on', isPhaseA);
-                modBlueR1.classList.toggle('blue-on', isPhaseB);
-
-                glowLeft.style.opacity = isPhaseA ? '1' : '0';
-                glowRight.style.opacity = isPhaseB ? '1' : '0';
-            } else {
+            if (!lightState.blueMain) {
                 modBlueL1.classList.remove('blue-on');
                 modBlueL2.classList.remove('blue-on');
                 modBlueR1.classList.remove('blue-on');
-                glowLeft.style.opacity = '0';
-                glowRight.style.opacity = '0';
+                glowLeft.style.opacity = lightState.cruise ? '0.28' : '0';
+                glowRight.style.opacity = lightState.cruise ? '0.28' : '0';
+                return;
             }
 
-            // --- ŚWIATŁO CZERWONE "PILOT" (pod stałym czerwonym kloszem) ---
-            // Dolny prawy przycisk (btn-aux2 -> lightState.redSync) zmienia wyłącznie
-            // synchronizację czerwonego światła (Faza B <-> Faza A).
-            if (lightState.redPilot) {
-                const isRedPhase = lightState.redSync ? isPhaseA : isPhaseB;
-                modPilotRed.classList.toggle('red-on', isRedPhase);
-                glowRed.style.opacity = isRedPhase ? '1' : '0';
-            } else {
+            const isBluePhaseA = (blueFlashStep === 0 || blueFlashStep === 2 || blueFlashStep === 4);
+            const isBluePhaseB = (blueFlashStep === 6 || blueFlashStep === 8 || blueFlashStep === 10);
+
+            modBlueL1.classList.toggle('blue-on', isBluePhaseA);
+            modBlueL2.classList.toggle('blue-on', isBluePhaseA);
+            modBlueR1.classList.toggle('blue-on', isBluePhaseB);
+
+            glowLeft.style.opacity = isBluePhaseA ? '1' : (lightState.cruise ? '0.28' : '0');
+            glowRight.style.opacity = isBluePhaseB ? '1' : (lightState.cruise ? '0.28' : '0');
+
+            blueFlashStep = (blueFlashStep + 1) % 12;
+        }, 75);
+
+        // --- B. ZEGAR ŚWIATŁA CZERWONEGO "PILOT" (Zachowana dotychczasowa prędkość: 40 ms / krok) ---
+        let redFlashStep = 0;
+
+        setInterval(() => {
+            if (!lightState.redPilot) {
                 modPilotRed.classList.remove('red-on');
                 glowRed.style.opacity = '0';
+                return;
             }
 
-            flashStep = (flashStep + 1) % 12;
+            const isRedActive = (redFlashStep === 6 || redFlashStep === 8 || redFlashStep === 10);
+            modPilotRed.classList.toggle('red-on', isRedActive);
+            glowRed.style.opacity = isRedActive ? '1' : '0';
+
+            redFlashStep = (redFlashStep + 1) % 12;
         }, 40);
     </script>
 </body>
