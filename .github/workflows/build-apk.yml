@@ -27,7 +27,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: 4. Przygotowanie plików, ikony i konfiguracja Capacitora
+      - name: 4. Przygotowanie plików i konfiguracja Capacitora
         run: |
           # Tworzymy folder tymczasowy www i kopiujemy pliki strony
           mkdir -p www
@@ -38,7 +38,7 @@ jobs:
 
           # Inicjalizacja projektu i instalacja narzędzi
           npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets sharp
+          npm install @capacitor/core @capacitor/cli @capacitor/android
 
           # Tworzenie pliku konfiguracyjnego aplikacji
           cat << 'EOF' > capacitor.config.json
@@ -50,41 +50,8 @@ jobs:
           }
           EOF
 
-          # Generowanie natywnego projektu Android
+          # Generowanie natywnego projektu Android bez błędnych grafik
           npx cap add android
-
-          # Automatyczna konwersja ikony (obsługuje każdy format i naprawia błędne rozszerzenia)
-          ICON_FILE=""
-          for f in icon.png icon.jpg icon.jpeg icon.webp logo.png logo.jpg logo.jpeg logo.webp favicon.png; do
-            if [ -f "$f" ]; then
-              ICON_FILE="$f"
-              break
-            fi
-          done
-
-          if [ -n "$ICON_FILE" ]; then
-            echo "Znaleziono grafikę ikony: $ICON_FILE - konwersja do formatu PNG..."
-            mkdir -p assets
-            node -e '
-              const sharp = require("sharp");
-              (async () => {
-                try {
-                  await sharp(process.env.ICON_FILE)
-                    .resize(1024, 1024, { fit: "contain", background: "#ffffff" })
-                    .toFormat("png")
-                    .toFile("assets/icon.png");
-                  console.log("Konwersja ikony powiodła się!");
-                } catch (err) {
-                  console.error("Błąd konwersji ikony:", err);
-                  process.exit(1);
-                }
-              })();
-            ' ICON_FILE="$ICON_FILE"
-            npx @capacitor/assets generate --android --iconBackgroundColor '#ffffff' --splashBackgroundColor '#ffffff'
-          else
-            echo "UWAGA: Nie znaleziono pliku ikony w repozytorium."
-          fi
-
           npx cap sync android
 
       - name: 5. Stały klucz podpisu i kompilacja pliku .apk (Gradle)
