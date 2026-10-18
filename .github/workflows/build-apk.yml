@@ -27,7 +27,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: 4. Przygotowanie plików, ikony i konfiguracja Capacitora
+      - name: 4. Przygotowanie plików i konfiguracja Capacitora
         run: |
           mkdir -p www
           rsync -av --exclude='www' --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='android' ./ www/
@@ -71,9 +71,26 @@ jobs:
 
           npx cap sync android
 
+          # Wymuszenie blokady usypiania ekranu natywnie w kodzie Androida (MainActivity.java)
+          cat << 'EOF' > android/app/src/main/java/pl/kot1999/symulatoroswietlenia/MainActivity.java
+          package pl.kot1999.symulatoroswietlenia;
+
+          import android.os.Bundle;
+          import android.view.WindowManager;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  // Ta linijka zapobiega gaśnięciu i blokowaniu ekranu:
+                  getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+              }
+          }
+          EOF
+
       - name: 5. Stały klucz, kompilacja i siłowe podpisywanie (apksigner)
         run: |
-          # Zapewnienie istnienia stałego klucza
           if [ ! -f ".github/debug.keystore" ]; then
             echo "Generowanie stałego klucza podpisu..."
             keytool -genkey -v -keystore .github/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
@@ -84,7 +101,6 @@ jobs:
             git push || true
           fi
 
-          # Podbijanie wersji (aby Android widział nowszą aplikację przy aktualizacji)
           sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/g" android/app/build.gradle
           sed -i "s/versionName \"1.0\"/versionName \"1.0.${{ github.run_number }}\"/g" android/app/build.gradle
 
@@ -97,7 +113,6 @@ jobs:
           }
           EOF
 
-          # Budowanie paczki APK
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
@@ -106,7 +121,6 @@ jobs:
           BUILD_TOOLS_VERSION=$(ls -1 $ANDROID_HOME/build-tools | sort -rV | head -n 1)
           $ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/apksigner sign --ks ../.github/debug.keystore --ks-pass pass:android --key-pass pass:android --ks-key-alias androiddebugkey app/build/outputs/apk/debug/app-debug.apk
 
-          # Zmiana nazwy
           mv app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/Symulator Oświetlenia Awaryjnego.apk"
 
       - name: 6. Udostępnienie gotowego pliku APK do pobrania
