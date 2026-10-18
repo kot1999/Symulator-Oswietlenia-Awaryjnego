@@ -27,7 +27,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: 4. Przygotowanie plików i konfiguracja Capacitora
+      - name: 4. Przygotowanie plików, ikony i konfiguracja Capacitora
         run: |
           # Tworzymy folder tymczasowy www i kopiujemy pliki strony
           mkdir -p www
@@ -36,9 +36,9 @@ jobs:
           # Czyszczenie starych plików package.json
           rm -f package.json package-lock.json
 
-          # Inicjalizacja projektu i instalacja narzędzi
+          # Inicjalizacja projektu i instalacja narzędzi wraz z biblioteką graficzną sharp
           npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets sharp
 
           # Tworzenie pliku konfiguracyjnego aplikacji
           cat << 'EOF' > capacitor.config.json
@@ -50,8 +50,33 @@ jobs:
           }
           EOF
 
-          # Generowanie natywnego projektu Android bez błędnych grafik
+          # Generowanie natywnego projektu Android
           npx cap add android
+
+          # Przetwarzanie ikony icon.png z repozytorium
+          if [ -f "icon.png" ]; then
+            echo "Znaleziono icon.png - generowanie ikony aplikacji..."
+            mkdir -p assets
+            node -e '
+              const sharp = require("sharp");
+              (async () => {
+                try {
+                  await sharp("icon.png")
+                    .resize(1024, 1024, { fit: "contain", background: "#ffffff" })
+                    .toFormat("png")
+                    .toFile("assets/icon.png");
+                  console.log("Ikona została pomyślnie przetworzona!");
+                } catch (err) {
+                  console.error("Błąd przetwarzania ikony:", err);
+                  process.exit(1);
+                }
+              })();
+            '
+            npx @capacitor/assets generate --android --iconBackgroundColor '#ffffff' --splashBackgroundColor '#ffffff'
+          else
+            echo "UWAGA: Nie znaleziono pliku icon.png w głównym katalogu."
+          fi
+
           npx cap sync android
 
       - name: 5. Stały klucz podpisu i kompilacja pliku .apk (Gradle)
