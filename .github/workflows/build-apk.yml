@@ -68,8 +68,11 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug
 
+          # Zmiana nazwy gotowego pliku z app-debug.apk na własną nazwę
+          mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Symulator-Oswietlenia-Awaryjnego.apk
+
       - name: 6. Udostępnienie gotowego pliku APK do pobrania
         uses: actions/upload-artifact@v4
         with:
           name: Symulator-Oswietlenia-Awaryjnego-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/Symulator-Oswietlenia-Awaryjnego.apk
