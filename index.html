@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Symulator LZN LF SLENDER & Federal Signal AS 422 Polonia</title>
+
+    <!-- Ikonka w pasku przeglądarki (wbudowana ikona SVG + obsługa pliku favicon.png/ico) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2316171a'/%3E%3Crect x='14' y='44' width='36' height='7' rx='2.5' fill='%239aa5b4'/%3E%3Cpath d='M19 44L21 23C21 13 43 13 43 23L45 44Z' fill='%230066ff' stroke='%2366b2ff' stroke-width='2.5'/%3E%3Cpath d='M32 16C38 16 42 18.5 42 23L43.5 44H32Z' fill='%230044b5'/%3E%3Cline x1='7' y1='17' x2='15' y2='21' stroke='%233399ff' stroke-width='3.5' stroke-linecap='round'/%3E%3Cline x1='5' y1='28' x2='13' y2='29' stroke='%233399ff' stroke-width='3.5' stroke-linecap='round'/%3E%3Cline x1='7' y1='39' x2='15' y2='37' stroke='%233399ff' stroke-width='3.5' stroke-linecap='round'/%3E%3Cline x1='57' y1='17' x2='49' y2='21' stroke='%233399ff' stroke-width='3.5' stroke-linecap='round'/%3E%3Cline x1='59' y1='28' x2='51' y2='29' stroke='%233399ff' stroke-width='3.5' stroke-linecap='round'/%3E%3Cline x1='57' y1='39' x2='49' y2='37' stroke='%233399ff' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E">
+    <link rel="alternate icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
+
     <style>
         * {
             -webkit-touch-callout: none; /* Blokuje menu na iOS/Android */
@@ -430,31 +436,36 @@
             border-bottom: 4px solid #090a0b;
         }
 
-        /* Panel informacyjny pod belką */
+        /* Panel informacyjny pod belką (stała wysokość i szerokość elementów) */
         .status-bar {
             margin-top: 38px;
             background: rgba(20, 22, 26, 0.9);
             border: 1px solid #282c34;
             border-radius: 12px;
-            padding: 12px 20px;
+            padding: 11px 20px;
             display: flex;
             flex-wrap: wrap;
-            gap: 14px 24px;
+            gap: 12px 22px;
             justify-content: center;
+            align-items: center;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
         .status-item {
-            display: flex;
+            display: inline-flex;
             align-items: center;
+            height: 20px;
+            line-height: 20px;
             gap: 8px;
             font-size: 13px;
             color: #8c96a5;
+            white-space: nowrap;
         }
         .status-dot {
             width: 9px;
             height: 9px;
             border-radius: 50%;
             background: #2d323b;
+            flex-shrink: 0;
             transition: all 0.15s ease;
         }
         .status-dot.active-blue {
@@ -472,6 +483,34 @@
         .status-dot.active-amber {
             background: #ffaa00;
             box-shadow: 0 0 8px #ffaa00;
+        }
+
+        /* Kontener utrzymujący stałą szerokość i wysokość przy przełączaniu napisu Postojowe <-> AH -> Robocze Przód */
+        .status-label-stack {
+            display: inline-grid;
+            align-items: center;
+            height: 20px;
+        }
+        .status-label-stack > span {
+            grid-area: 1 / 1;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            height: 20px;
+            line-height: 20px;
+            white-space: nowrap;
+        }
+        .status-label-hidden {
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* Wyśrodkowana w pionie strzałka SVG */
+        .status-arrow {
+            width: 14px;
+            height: 12px;
+            display: block;
+            flex-shrink: 0;
         }
 
         /* =========================================================
@@ -737,7 +776,7 @@
                 </div>
             </div>
 
-            <!-- Pasek stanu aktywnych funkcji -->
+            <!-- Pasek stanu aktywnych funkcji (zablokowany rozmiar przy przełączaniu trybów) -->
             <div class="status-bar">
                 <div class="status-item">
                     <div class="status-dot" id="st-blue"></div>
@@ -761,7 +800,16 @@
                 </div>
                 <div class="status-item">
                     <div class="status-dot" id="st-cruise"></div>
-                    <span id="st-cruise-label">Postojowe (Cruise)</span>
+                    <span class="status-label-stack">
+                        <span id="st-label-cruise">Postojowe (Cruise)</span>
+                        <span id="st-label-ah-mode" class="status-label-hidden">
+                            <span>AH</span>
+                            <svg class="status-arrow" viewBox="0 0 16 12" aria-hidden="true">
+                                <path d="M1.5 6H14M10 2L14.2 6L10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Robocze Przód</span>
+                        </span>
+                    </span>
                 </div>
                 <div class="status-item">
                     <div class="status-dot" id="st-siren"></div>
@@ -1367,12 +1415,16 @@
             document.getElementById('st-wl').className = 'status-dot' + (lightState.wlPanel ? ' active-white' : '');
 
             const stCruise = document.getElementById('st-cruise');
-            const stCruiseLabel = document.getElementById('st-cruise-label');
+            const labelCruise = document.getElementById('st-label-cruise');
+            const labelAhMode = document.getElementById('st-label-ah-mode');
+
             if (lightState.blueMain) {
-                stCruiseLabel.textContent = 'AH → Robocze Przód';
+                labelCruise.classList.add('status-label-hidden');
+                labelAhMode.classList.remove('status-label-hidden');
                 stCruise.className = 'status-dot' + (isAhTakedownMode ? ' active-amber' : '');
             } else {
-                stCruiseLabel.textContent = 'Postojowe (Cruise)';
+                labelAhMode.classList.add('status-label-hidden');
+                labelCruise.classList.remove('status-label-hidden');
                 stCruise.className = 'status-dot' + (isCruiseActive ? ' active-blue' : '');
             }
 
