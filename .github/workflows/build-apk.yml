@@ -36,7 +36,7 @@ jobs:
           # Czyszczenie starych plików package.json
           rm -f package.json package-lock.json
 
-          # Inicjalizacja projektu i instalacja narzędzi wraz z biblioteką graficzną sharp
+          # Inicjalizacja projektu i instalacja narzędzi
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets sharp
 
@@ -65,7 +65,7 @@ jobs:
                     .resize(1024, 1024, { fit: "contain", background: "#ffffff" })
                     .toFormat("png")
                     .toFile("assets/icon.png");
-                  console.log("Ikona została pomyślnie przetworzona!");
+                  console.log("Ikona pomyślnie przetworzona!");
                 } catch (err) {
                   console.error("Błąd przetwarzania ikony:", err);
                   process.exit(1);
@@ -109,10 +109,11 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug
 
-          mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Symulator-Oswietlenia-Awaryjnego.apk
+          # Zmiana nazwy pliku na pełną nazwę ze spacjami i polskimi znakami
+          mv app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/Symulator Oświetlenia Awaryjnego.apk"
 
       - name: 6. Udostępnienie gotowego pliku APK do pobrania
         uses: actions/upload-artifact@v4
         with:
           name: Symulator-Oswietlenia-Awaryjnego-APK
-          path: android/app/build/outputs/apk/debug/Symulator-Oswietlenia-Awaryjnego.apk
+          path: "android/app/build/outputs/apk/debug/Symulator Oświetlenia Awaryjnego.apk"
