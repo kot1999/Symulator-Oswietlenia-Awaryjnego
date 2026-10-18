@@ -18,31 +18,53 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        body {
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
             background-color: #16171a;
             background-image: radial-gradient(circle at 35% 50%, #1e2128 0%, #121316 75%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
             font-family: 'Arial Narrow', Arial, sans-serif;
             touch-action: none; /* Całkowicie blokuje gesty przeglądarki przy trzymaniu palca */
-            overflow: hidden;
             color: #cfd6e0;
         }
 
-        /* Główny układ: Belka po lewej, Pilot po prawej */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Główny układ: domyślnie Belka po lewej, Pilot po prawej */
         .simulator-layout {
             display: flex;
             flex-direction: row;
             align-items: center;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 1360px;
-            padding: 20px 40px;
+            justify-content: center;
             gap: 48px;
             box-sizing: border-box;
+        }
+
+        /* W orientacji pionowej na telefonach: Belka na górze, Pilot na dole */
+        body.portrait-phone .simulator-layout {
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* Kontenery skalujące zachowujące 100% oryginalnych proporcji elementów */
+        .scale-slot {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .scale-target {
+            transform-origin: center center;
+            flex-shrink: 0;
         }
 
         /* =========================================================
@@ -53,14 +75,15 @@
             box-sizing: border-box;
         }
 
+        /* Stała szerokość bazowa 880px gwarantuje identyczne proporcje belki na każdym ekranie */
         .lightbar-stage {
-            flex: 1;
+            width: 880px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             position: relative;
-            min-height: 420px;
+            padding: 16px 0;
         }
 
         /* Poświata otoczenia rzucana przez belkę */
@@ -117,11 +140,10 @@
             opacity: 1;
         }
 
-        /* Główny kontener belki LZN LF SLENDER (zachowane proporcje) */
+        /* Główny kontener belki LZN LF SLENDER (zachowane proporcje 880px) */
         .lzn-wrapper {
             position: relative;
-            width: 100%;
-            max-width: 880px;
+            width: 880px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -438,18 +460,31 @@
 
         /* Panel informacyjny pod belką (stała wysokość i szerokość elementów) */
         .status-bar {
-            margin-top: 38px;
+            margin-top: 34px;
             background: rgba(20, 22, 26, 0.9);
             border: 1px solid #282c34;
             border-radius: 12px;
             padding: 11px 20px;
             display: flex;
-            flex-wrap: wrap;
-            gap: 12px 22px;
+            flex-wrap: nowrap;
+            gap: 12px 20px;
             justify-content: center;
             align-items: center;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
+
+        /* W orientacji pionowej na telefonie pasek układa się w 2 czytelne wiersze o stałym rozmiarze */
+        body.portrait-phone .status-bar {
+            margin-top: 22px;
+            flex-wrap: wrap;
+            width: 680px;
+            padding: 12px 18px;
+            gap: 10px 24px;
+        }
+        body.portrait-phone .status-item {
+            font-size: 15px;
+        }
+
         .status-item {
             display: inline-flex;
             align-items: center;
@@ -503,6 +538,16 @@
         .status-label-hidden {
             visibility: hidden;
             pointer-events: none;
+        }
+
+        /* Stała szerokość etykiety syreny, aby zmiana z WYŁ na AIR HORN nie zmieniała szerokości paska */
+        .siren-label-fixed {
+            display: inline-block;
+            min-width: 118px;
+            text-align: left;
+        }
+        body.portrait-phone .siren-label-fixed {
+            min-width: 135px;
         }
 
         /* Wyśrodkowana w pionie strzałka SVG */
@@ -685,295 +730,299 @@
 </head>
 <body>
 
-    <div class="simulator-layout">
+    <div class="simulator-layout" id="simulator-layout">
         <!-- =========================================================
-             LEWA STRONA: BELKA OSTRZEGAWCZA LZN LF SLENDER
+             LEWA STRONA (GÓRA W PIONIE NA TELEFONIE): BELKA LZN LF SLENDER
              ========================================================= -->
-        <div class="lightbar-stage">
-            <!-- Poświaty tła -->
-            <div class="ambient-glow ambient-left" id="glow-left"></div>
-            <div class="ambient-glow ambient-right" id="glow-right"></div>
-            <div class="ambient-glow ambient-red" id="glow-red"></div>
+        <div class="scale-slot" id="lightbar-slot">
+            <div class="lightbar-stage scale-target" id="lightbar-stage">
+                <!-- Poświaty tła -->
+                <div class="ambient-glow ambient-left" id="glow-left"></div>
+                <div class="ambient-glow ambient-right" id="glow-right"></div>
+                <div class="ambient-glow ambient-red" id="glow-red"></div>
 
-            <div class="lzn-wrapper">
-                <!-- Stożki bocznych lamp roboczych (Alley Lights) -->
-                <div class="alley-beam left" id="beam-alley-left"></div>
-                <div class="alley-beam right" id="beam-alley-right"></div>
+                <div class="lzn-wrapper">
+                    <!-- Stożki bocznych lamp roboczych (Alley Lights) -->
+                    <div class="alley-beam left" id="beam-alley-left"></div>
+                    <div class="alley-beam right" id="beam-alley-right"></div>
 
-                <!-- Górna pokrywa -->
-                <div class="lzn-top-cap"></div>
+                    <!-- Górna pokrywa -->
+                    <div class="lzn-top-cap"></div>
 
-                <!-- Główny klosz belki LZN LF SLENDER -->
-                <div class="lzn-body">
-                    <!-- 1. LEWY KLOSZ NIEBIESKI: Lampa boczna Alley L + 2 moduły niebieskie MD3 -->
-                    <div class="lens-section lens-blue-tint">
-                        <div class="work-light side-alley" id="mod-alley-l" title="Lampa robocza boczna lewa">
-                            <div class="led-diode"></div>
+                    <!-- Główny klosz belki LZN LF SLENDER -->
+                    <div class="lzn-body">
+                        <!-- 1. LEWY KLOSZ NIEBIESKI: Lampa boczna Alley L + 2 moduły niebieskie MD3 -->
+                        <div class="lens-section lens-blue-tint">
+                            <div class="work-light side-alley" id="mod-alley-l" title="Lampa robocza boczna lewa">
+                                <div class="led-diode"></div>
+                            </div>
+                            <div class="md3-module" id="mod-blue-l1" title="Moduł MD3 Niebieski L1">
+                                <div class="led-diode"></div>
+                                <div class="led-diode"></div>
+                                <div class="led-diode"></div>
+                            </div>
+                            <div class="md3-module" id="mod-blue-l2" title="Moduł MD3 Niebieski L2">
+                                <div class="led-diode"></div>
+                                <div class="led-diode"></div>
+                                <div class="led-diode"></div>
+                            </div>
                         </div>
-                        <div class="md3-module" id="mod-blue-l1" title="Moduł MD3 Niebieski L1">
-                            <div class="led-diode"></div>
-                            <div class="led-diode"></div>
-                            <div class="led-diode"></div>
+
+                        <!-- 2. LEWY KLOSZ BEZBARWNY: Przednia lampa robocza (Takedown L) -->
+                        <div class="lens-section lens-clear-tint">
+                            <div class="work-light" id="mod-takedown-l" title="Przednia lampa robocza lewa">
+                                <div class="led-diode"></div>
+                                <div class="led-diode"></div>
+                            </div>
                         </div>
-                        <div class="md3-module" id="mod-blue-l2" title="Moduł MD3 Niebieski L2">
-                            <div class="led-diode"></div>
-                            <div class="led-diode"></div>
-                            <div class="led-diode"></div>
+
+                        <!-- 3. ŚRODKOWY PODŚWIETLANY KASETON: Napis POLICJA -->
+                        <div class="center-wl-panel" id="mod-wl-panel" onclick="cycleWlText()" title="Kliknij, aby zmienić napis na kasetonie">
+                            <span class="wl-text" id="wl-text-content">POLICJA</span>
+                        </div>
+
+                        <!-- 4. STAŁY KLOSZ CZERWONY (po prawej od napisu POLICJA): Moduł Czerwony PILOT -->
+                        <div class="lens-section lens-red-tint">
+                            <div class="md3-module" id="mod-pilot-red" title="Moduł MD3 Czerwony PILOT pod czerwonym kloszem">
+                                <div class="led-diode"></div>
+                                <div class="led-diode"></div>
+                                <div class="led-diode"></div>
+                            </div>
+                        </div>
+
+                        <!-- 5. PRAWY KLOSZ BEZBARWNY: Przednia lampa robocza (Takedown R) -->
+                        <div class="lens-section lens-clear-tint">
+                            <div class="work-light" id="mod-takedown-r" title="Przednia lampa robocza prawa">
+                                <div class="led-diode"></div>
+                                <div class="led-diode"></div>
+                            </div>
+                        </div>
+
+                        <!-- 6. PRAWY KLOSZ NIEBIESKI: Moduł niebieski MD3 + Lampa boczna Alley R -->
+                        <div class="lens-section lens-blue-tint">
+                            <div class="md3-module" id="mod-blue-r1" title="Moduł MD3 Niebieski P1">
+                                <div class="led-diode"></div>
+                                <div class="led-diode"></div>
+                                <div class="led-diode"></div>
+                            </div>
+                            <div class="work-light side-alley" id="mod-alley-r" title="Lampa robocza boczna prawa">
+                                <div class="led-diode"></div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- 2. LEWY KLOSZ BEZBARWNY: Przednia lampa robocza (Takedown L) -->
-                    <div class="lens-section lens-clear-tint">
-                        <div class="work-light" id="mod-takedown-l" title="Przednia lampa robocza lewa">
-                            <div class="led-diode"></div>
-                            <div class="led-diode"></div>
-                        </div>
+                    <!-- Dolna szyna aluminiowa i uchwyty dachowe -->
+                    <div class="lzn-bottom-rail">
+                        <span class="elektra-badge">ELEKTRA LZN-LF SLENDER</span>
+                        <span class="elektra-badge">ECE R65 / R10</span>
                     </div>
-
-                    <!-- 3. ŚRODKOWY PODŚWIETLANY KASETON: Napis POLICJA -->
-                    <div class="center-wl-panel" id="mod-wl-panel" onclick="cycleWlText()" title="Kliknij, aby zmienić napis na kasetonie">
-                        <span class="wl-text" id="wl-text-content">POLICJA</span>
-                    </div>
-
-                    <!-- 4. STAŁY KLOSZ CZERWONY (po prawej od napisu POLICJA): Moduł Czerwony PILOT -->
-                    <div class="lens-section lens-red-tint">
-                        <div class="md3-module" id="mod-pilot-red" title="Moduł MD3 Czerwony PILOT pod czerwonym kloszem">
-                            <div class="led-diode"></div>
-                            <div class="led-diode"></div>
-                            <div class="led-diode"></div>
-                        </div>
-                    </div>
-
-                    <!-- 5. PRAWY KLOSZ BEZBARWNY: Przednia lampa robocza (Takedown R) -->
-                    <div class="lens-section lens-clear-tint">
-                        <div class="work-light" id="mod-takedown-r" title="Przednia lampa robocza prawa">
-                            <div class="led-diode"></div>
-                            <div class="led-diode"></div>
-                        </div>
-                    </div>
-
-                    <!-- 6. PRAWY KLOSZ NIEBIESKI: Moduł niebieski MD3 + Lampa boczna Alley R -->
-                    <div class="lens-section lens-blue-tint">
-                        <div class="md3-module" id="mod-blue-r1" title="Moduł MD3 Niebieski P1">
-                            <div class="led-diode"></div>
-                            <div class="led-diode"></div>
-                            <div class="led-diode"></div>
-                        </div>
-                        <div class="work-light side-alley" id="mod-alley-r" title="Lampa robocza boczna prawa">
-                            <div class="led-diode"></div>
-                        </div>
+                    <div class="lzn-mounts">
+                        <div class="mount-foot"></div>
+                        <div class="mount-foot"></div>
                     </div>
                 </div>
 
-                <!-- Dolna szyna aluminiowa i uchwyty dachowe -->
-                <div class="lzn-bottom-rail">
-                    <span class="elektra-badge">ELEKTRA LZN-LF SLENDER</span>
-                    <span class="elektra-badge">ECE R65 / R10</span>
-                </div>
-                <div class="lzn-mounts">
-                    <div class="mount-foot"></div>
-                    <div class="mount-foot"></div>
-                </div>
-            </div>
-
-            <!-- Pasek stanu aktywnych funkcji (zablokowany rozmiar przy przełączaniu trybów) -->
-            <div class="status-bar">
-                <div class="status-item">
-                    <div class="status-dot" id="st-blue"></div>
-                    <span>Główne LED (MD3)</span>
-                </div>
-                <div class="status-item">
-                    <div class="status-dot" id="st-red"></div>
-                    <span>Pilot (Czerwony)</span>
-                </div>
-                <div class="status-item">
-                    <div class="status-dot" id="st-takedown"></div>
-                    <span>Robocze Przód</span>
-                </div>
-                <div class="status-item">
-                    <div class="status-dot" id="st-alley"></div>
-                    <span>Robocze Boki</span>
-                </div>
-                <div class="status-item">
-                    <div class="status-dot" id="st-wl"></div>
-                    <span>Kaseton WL</span>
-                </div>
-                <div class="status-item">
-                    <div class="status-dot" id="st-cruise"></div>
-                    <span class="status-label-stack">
-                        <span id="st-label-cruise">Postojowe (Cruise)</span>
-                        <span id="st-label-ah-mode" class="status-label-hidden">
-                            <span>AH</span>
-                            <svg class="status-arrow" viewBox="0 0 16 12" aria-hidden="true">
-                                <path d="M1.5 6H14M10 2L14.2 6L10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            <span>Robocze Przód</span>
+                <!-- Pasek stanu aktywnych funkcji (zablokowany rozmiar przy przełączaniu trybów) -->
+                <div class="status-bar">
+                    <div class="status-item">
+                        <div class="status-dot" id="st-blue"></div>
+                        <span>Główne LED (MD3)</span>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-dot" id="st-red"></div>
+                        <span>Pilot (Czerwony)</span>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-dot" id="st-takedown"></div>
+                        <span>Robocze Przód</span>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-dot" id="st-alley"></div>
+                        <span>Robocze Boki</span>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-dot" id="st-wl"></div>
+                        <span>Kaseton WL</span>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-dot" id="st-cruise"></div>
+                        <span class="status-label-stack">
+                            <span id="st-label-cruise">Postojowe (Cruise)</span>
+                            <span id="st-label-ah-mode" class="status-label-hidden">
+                                <span>AH</span>
+                                <svg class="status-arrow" viewBox="0 0 16 12" aria-hidden="true">
+                                    <path d="M1.5 6H14M10 2L14.2 6L10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <span>Robocze Przód</span>
+                            </span>
                         </span>
-                    </span>
-                </div>
-                <div class="status-item">
-                    <div class="status-dot" id="st-siren"></div>
-                    <span id="st-siren-label">Syrena: WYŁ</span>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-dot" id="st-siren"></div>
+                        <span id="st-siren-label" class="siren-label-fixed">Syrena: WYŁ</span>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- =========================================================
-             PRAWA STRONA: PILOT FEDERAL SIGNAL AS 422 POLONIA
+             PRAWA STRONA (DÓŁ W PIONIE NA TELEFONIE): PILOT AS 422 POLONIA
              ========================================================= -->
-        <div class="remote-wrapper">
-            <div class="remote">
-                <!-- Maskownica głośnika -->
-                <div class="speaker-recess">
-                    <div class="grill-line"></div>
-                    <div class="grill-line"></div>
-                    <div class="grill-line"></div>
+        <div class="scale-slot" id="remote-slot">
+            <div class="remote-wrapper scale-target" id="remote-wrapper">
+                <div class="remote">
+                    <!-- Maskownica głośnika -->
+                    <div class="speaker-recess">
+                        <div class="grill-line"></div>
+                        <div class="grill-line"></div>
+                        <div class="grill-line"></div>
+                    </div>
+
+                    <div class="button-grid">
+                        <!-- Rząd 1: OFF | Mikrofon -->
+                        <div class="btn-well">
+                            <div class="btn" id="btn-off" onclick="turnOffAll()">
+                                <svg viewBox="0 0 60 60">
+                                    <text x="30" y="41" text-anchor="middle" class="icon-fill" font-family="Arial, sans-serif" font-weight="bold" font-size="31" textLength="46" lengthAdjust="spacingAndGlyphs">OFF</text>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="btn-well">
+                            <div class="btn" id="btn-radio" onclick="toggleLightBtn('btn-radio')">
+                                <svg viewBox="0 0 60 60">
+                                    <g transform="translate(25, 26) rotate(-32)">
+                                        <rect x="-13" y="-10" width="24" height="19" rx="3" fill="none" class="icon-stroke" stroke-width="2.6"/>
+                                        <path d="M-10,-10 L-10,9" class="icon-stroke" stroke-width="1.8"/>
+                                        <circle cx="0" cy="-0.5" r="5.5" fill="none" class="icon-stroke" stroke-width="2.2"/>
+                                        <circle cx="0" cy="-0.5" r="2" class="icon-fill"/>
+                                        <rect x="-2" y="-13" width="6" height="3" rx="1" class="icon-fill"/>
+                                    </g>
+                                    <path d="M35,33 C38,31 40,35 37,37 C40,36 43,39 40,42 C43,41 46,44 43,46 L48,48" fill="none" class="icon-stroke" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Rząd 2: Dwie nutki | AH -->
+                        <div class="btn-well">
+                            <div class="btn" id="btn-siren" onclick="toggleSiren()">
+                                <svg viewBox="0 0 60 60">
+                                    <g transform="translate(19, 25) rotate(-12)">
+                                        <ellipse cx="-4" cy="7" rx="5.5" ry="3.8" transform="rotate(-20 -4 7)" class="icon-fill"/>
+                                        <path d="M0.5,6 L0.5,-11 C5,-8 8,-4 7,2" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </g>
+                                    <g transform="translate(41, 36) rotate(8)">
+                                        <ellipse cx="-4" cy="7" rx="5.5" ry="3.8" transform="rotate(-20 -4 7)" class="icon-fill"/>
+                                        <path d="M0.5,6 L0.5,-11 C5,-8 8,-4 7,2" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </g>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="btn-well">
+                            <div class="btn" id="btn-ah">
+                                <svg viewBox="0 0 60 60">
+                                    <text x="30" y="41" text-anchor="middle" class="icon-fill" font-family="Arial, sans-serif" font-weight="bold" font-size="32" textLength="38" lengthAdjust="spacingAndGlyphs">AH</text>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Rząd 3: Kogut pusty | Kogut półpełny -->
+                        <div class="btn-well">
+                            <div class="btn" id="btn-light1" onclick="toggleLightBtn('btn-light1')">
+                                <svg viewBox="0 0 60 60">
+                                    <rect x="15" y="42" width="30" height="6" rx="2" class="icon-fill"/>
+                                    <path d="M19,42 L20,23 C20,14 40,14 40,23 L41,42 Z" fill="none" class="icon-stroke" stroke-width="3.2" stroke-linejoin="round"/>
+                                    <line x1="8" y1="16" x2="15" y2="20" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                    <line x1="7" y1="26" x2="14" y2="27" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                    <line x1="8" y1="36" x2="15" y2="34" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                    <line x1="52" y1="16" x2="45" y2="20" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                    <line x1="53" y1="26" x2="46" y2="27" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                    <line x1="52" y1="36" x2="45" y2="34" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="btn-well">
+                            <div class="btn" id="btn-light2" onclick="toggleLightBtn('btn-light2')">
+                                <svg viewBox="0 0 60 60">
+                                    <rect x="15" y="42" width="30" height="6" rx="2" class="icon-fill"/>
+                                    <path d="M19,42 L20,23 C20,14 40,14 40,23 L41,42 Z" fill="none" class="icon-stroke" stroke-width="3.2" stroke-linejoin="round"/>
+                                    <path d="M30,16.2 C35.5,16.2 40,18.5 40,23 L41,42 L30,42 Z" class="icon-fill"/>
+                                    <line x1="8" y1="16" x2="15" y2="20" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                    <line x1="7" y1="26" x2="14" y2="27" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                    <line x1="8" y1="36" x2="15" y2="34" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                    <line x1="52" y1="16" x2="45" y2="20" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                    <line x1="53" y1="26" x2="46" y2="27" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                    <line x1="52" y1="36" x2="45" y2="34" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Rząd 4: Dwa reflektory w górę | Dwa reflektory do środka -->
+                        <div class="btn-well">
+                            <div class="btn" id="btn-grill1" onclick="toggleLightBtn('btn-grill1')">
+                                <svg viewBox="0 0 60 60">
+                                    <path d="M7,31 A10,9.5 0 0,0 27,31 Z" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linejoin="round"/>
+                                    <line x1="12" y1="20" x2="12" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                                    <line x1="17" y1="20" x2="17" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                                    <line x1="22" y1="20" x2="22" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+
+                                    <path d="M33,31 A10,9.5 0 0,0 53,31 Z" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linejoin="round"/>
+                                    <line x1="38" y1="20" x2="38" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                                    <line x1="43" y1="20" x2="43" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                                    <line x1="48" y1="20" x2="48" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="btn-well">
+                            <div class="btn" id="btn-grill2" onclick="toggleLightBtn('btn-grill2')">
+                                <svg viewBox="0 0 60 60">
+                                    <path d="M16,20 A10,10 0 0,1 16,40 Z" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linejoin="round"/>
+                                    <line x1="6" y1="24" x2="12" y2="24" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                                    <line x1="6" y1="30" x2="12" y2="30" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                                    <line x1="6" y1="36" x2="12" y2="36" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+
+                                    <path d="M44,20 A10,10 0 0,0 44,40 Z" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linejoin="round"/>
+                                    <line x1="48" y1="24" x2="54" y2="24" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                                    <line x1="48" y1="30" x2="54" y2="30" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                                    <line x1="48" y1="36" x2="54" y2="36" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Rząd 5: Lampka sufitowa | Pusty przycisk (Postojowe / AH -> Robocze przód) -->
+                        <div class="btn-well">
+                            <div class="btn" id="btn-aux1" onclick="toggleLightBtn('btn-aux1')">
+                                <svg viewBox="0 0 60 60">
+                                    <line x1="16" y1="20" x2="44" y2="20" class="icon-stroke" stroke-width="3.6" stroke-linecap="round"/>
+                                    <path d="M21,21 A9,7.5 0 0,0 39,21 Z" fill="none" class="icon-stroke" stroke-width="2.8"/>
+                                    <line x1="18" y1="31" x2="15" y2="34" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                    <line x1="12" y1="37" x2="9" y2="40" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                    <line x1="24" y1="33" x2="22" y2="37" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                    <line x1="20" y1="41" x2="18" y2="44" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                    <line x1="30" y1="34" x2="30" y2="38" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                    <line x1="30" y1="42" x2="30" y2="46" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                    <line x1="36" y1="33" x2="38" y2="37" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                    <line x1="40" y1="41" x2="42" y2="44" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                    <line x1="42" y1="31" x2="45" y2="34" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                    <line x1="48" y1="37" x2="51" y2="40" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="btn-well">
+                            <div class="btn" id="btn-aux2" onclick="toggleLightBtn('btn-aux2')">
+                                <div class="led-dot"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="button-grid">
-                    <!-- Rząd 1: OFF | Mikrofon -->
-                    <div class="btn-well">
-                        <div class="btn" id="btn-off" onclick="turnOffAll()">
-                            <svg viewBox="0 0 60 60">
-                                <text x="30" y="41" text-anchor="middle" class="icon-fill" font-family="Arial, sans-serif" font-weight="bold" font-size="31" textLength="46" lengthAdjust="spacingAndGlyphs">OFF</text>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <div class="btn-well">
-                        <div class="btn" id="btn-radio" onclick="toggleLightBtn('btn-radio')">
-                            <svg viewBox="0 0 60 60">
-                                <g transform="translate(25, 26) rotate(-32)">
-                                    <rect x="-13" y="-10" width="24" height="19" rx="3" fill="none" class="icon-stroke" stroke-width="2.6"/>
-                                    <path d="M-10,-10 L-10,9" class="icon-stroke" stroke-width="1.8"/>
-                                    <circle cx="0" cy="-0.5" r="5.5" fill="none" class="icon-stroke" stroke-width="2.2"/>
-                                    <circle cx="0" cy="-0.5" r="2" class="icon-fill"/>
-                                    <rect x="-2" y="-13" width="6" height="3" rx="1" class="icon-fill"/>
-                                </g>
-                                <path d="M35,33 C38,31 40,35 37,37 C40,36 43,39 40,42 C43,41 46,44 43,46 L48,48" fill="none" class="icon-stroke" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <!-- Rząd 2: Dwie nutki | AH -->
-                    <div class="btn-well">
-                        <div class="btn" id="btn-siren" onclick="toggleSiren()">
-                            <svg viewBox="0 0 60 60">
-                                <g transform="translate(19, 25) rotate(-12)">
-                                    <ellipse cx="-4" cy="7" rx="5.5" ry="3.8" transform="rotate(-20 -4 7)" class="icon-fill"/>
-                                    <path d="M0.5,6 L0.5,-11 C5,-8 8,-4 7,2" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                </g>
-                                <g transform="translate(41, 36) rotate(8)">
-                                    <ellipse cx="-4" cy="7" rx="5.5" ry="3.8" transform="rotate(-20 -4 7)" class="icon-fill"/>
-                                    <path d="M0.5,6 L0.5,-11 C5,-8 8,-4 7,2" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                </g>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <div class="btn-well">
-                        <div class="btn" id="btn-ah">
-                            <svg viewBox="0 0 60 60">
-                                <text x="30" y="41" text-anchor="middle" class="icon-fill" font-family="Arial, sans-serif" font-weight="bold" font-size="32" textLength="38" lengthAdjust="spacingAndGlyphs">AH</text>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <!-- Rząd 3: Kogut pusty | Kogut półpełny -->
-                    <div class="btn-well">
-                        <div class="btn" id="btn-light1" onclick="toggleLightBtn('btn-light1')">
-                            <svg viewBox="0 0 60 60">
-                                <rect x="15" y="42" width="30" height="6" rx="2" class="icon-fill"/>
-                                <path d="M19,42 L20,23 C20,14 40,14 40,23 L41,42 Z" fill="none" class="icon-stroke" stroke-width="3.2" stroke-linejoin="round"/>
-                                <line x1="8" y1="16" x2="15" y2="20" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
-                                <line x1="7" y1="26" x2="14" y2="27" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
-                                <line x1="8" y1="36" x2="15" y2="34" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
-                                <line x1="52" y1="16" x2="45" y2="20" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
-                                <line x1="53" y1="26" x2="46" y2="27" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
-                                <line x1="52" y1="36" x2="45" y2="34" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <div class="btn-well">
-                        <div class="btn" id="btn-light2" onclick="toggleLightBtn('btn-light2')">
-                            <svg viewBox="0 0 60 60">
-                                <rect x="15" y="42" width="30" height="6" rx="2" class="icon-fill"/>
-                                <path d="M19,42 L20,23 C20,14 40,14 40,23 L41,42 Z" fill="none" class="icon-stroke" stroke-width="3.2" stroke-linejoin="round"/>
-                                <path d="M30,16.2 C35.5,16.2 40,18.5 40,23 L41,42 L30,42 Z" class="icon-fill"/>
-                                <line x1="8" y1="16" x2="15" y2="20" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
-                                <line x1="7" y1="26" x2="14" y2="27" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
-                                <line x1="8" y1="36" x2="15" y2="34" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
-                                <line x1="52" y1="16" x2="45" y2="20" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
-                                <line x1="53" y1="26" x2="46" y2="27" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
-                                <line x1="52" y1="36" x2="45" y2="34" class="icon-stroke" stroke-width="3" stroke-linecap="round"/>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <!-- Rząd 4: Dwa reflektory w górę | Dwa reflektory do środka -->
-                    <div class="btn-well">
-                        <div class="btn" id="btn-grill1" onclick="toggleLightBtn('btn-grill1')">
-                            <svg viewBox="0 0 60 60">
-                                <path d="M7,31 A10,9.5 0 0,0 27,31 Z" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linejoin="round"/>
-                                <line x1="12" y1="20" x2="12" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
-                                <line x1="17" y1="20" x2="17" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
-                                <line x1="22" y1="20" x2="22" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
-
-                                <path d="M33,31 A10,9.5 0 0,0 53,31 Z" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linejoin="round"/>
-                                <line x1="38" y1="20" x2="38" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
-                                <line x1="43" y1="20" x2="43" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
-                                <line x1="48" y1="20" x2="48" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <div class="btn-well">
-                        <div class="btn" id="btn-grill2" onclick="toggleLightBtn('btn-grill2')">
-                            <svg viewBox="0 0 60 60">
-                                <path d="M16,20 A10,10 0 0,1 16,40 Z" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linejoin="round"/>
-                                <line x1="6" y1="24" x2="12" y2="24" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
-                                <line x1="6" y1="30" x2="12" y2="30" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
-                                <line x1="6" y1="36" x2="12" y2="36" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
-
-                                <path d="M44,20 A10,10 0 0,0 44,40 Z" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linejoin="round"/>
-                                <line x1="48" y1="24" x2="54" y2="24" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
-                                <line x1="48" y1="30" x2="54" y2="30" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
-                                <line x1="48" y1="36" x2="54" y2="36" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <!-- Rząd 5: Lampka sufitowa | Pusty przycisk (Postojowe / AH -> Robocze przód) -->
-                    <div class="btn-well">
-                        <div class="btn" id="btn-aux1" onclick="toggleLightBtn('btn-aux1')">
-                            <svg viewBox="0 0 60 60">
-                                <line x1="16" y1="20" x2="44" y2="20" class="icon-stroke" stroke-width="3.6" stroke-linecap="round"/>
-                                <path d="M21,21 A9,7.5 0 0,0 39,21 Z" fill="none" class="icon-stroke" stroke-width="2.8"/>
-                                <line x1="18" y1="31" x2="15" y2="34" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
-                                <line x1="12" y1="37" x2="9" y2="40" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
-                                <line x1="24" y1="33" x2="22" y2="37" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
-                                <line x1="20" y1="41" x2="18" y2="44" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
-                                <line x1="30" y1="34" x2="30" y2="38" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
-                                <line x1="30" y1="42" x2="30" y2="46" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
-                                <line x1="36" y1="33" x2="38" y2="37" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
-                                <line x1="40" y1="41" x2="42" y2="44" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
-                                <line x1="42" y1="31" x2="45" y2="34" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
-                                <line x1="48" y1="37" x2="51" y2="40" class="icon-stroke" stroke-width="2.8" stroke-linecap="round"/>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <div class="btn-well">
-                        <div class="btn" id="btn-aux2" onclick="toggleLightBtn('btn-aux2')">
-                            <div class="led-dot"></div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Przewód wychodzący z dołu pilota -->
+                <div class="cable-boot"></div>
+                <div class="cable"></div>
             </div>
-            <!-- Przewód wychodzący z dołu pilota -->
-            <div class="cable-boot"></div>
-            <div class="cable"></div>
         </div>
     </div>
 
@@ -982,6 +1031,101 @@
         window.addEventListener('contextmenu', function(e) {
             e.preventDefault();
         }, { passive: false });
+
+        // =========================================================================
+        // 0. RESPONSYWNE SKALOWANIE NA TELEFONY (PIONOWO I POZIOMO) BEZ UTRATY PROPORCJI
+        // =========================================================================
+        const simLayout     = document.getElementById('simulator-layout');
+        const lightbarSlot  = document.getElementById('lightbar-slot');
+        const lightbarStage = document.getElementById('lightbar-stage');
+        const remoteSlot    = document.getElementById('remote-slot');
+        const remoteWrapper = document.getElementById('remote-wrapper');
+
+        function fitSimulatorToViewport() {
+            const vw = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+            const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+
+            // Wykrycie orientacji pionowej na telefonie / wąskim ekranie
+            const isPortraitPhone = (vh > vw) && (vw < 820);
+            document.body.classList.toggle('portrait-phone', isPortraitPhone);
+
+            // Bazowe wymiary (1:1) belki i pilota
+            const lbBaseW  = lightbarStage.offsetWidth || 880;
+            const lbBaseH  = lightbarStage.offsetHeight || 240;
+            const remBaseW = remoteWrapper.offsetWidth || 238;
+            const remBaseH = remoteWrapper.offsetHeight || 548;
+
+            if (isPortraitPhone) {
+                // TRYB PIONOWY NA TELEFONIE: Belka na górze (pełna szerokość), Pilot pod spodem
+                const padX = 16;
+                const padY = 16;
+                const gapY = 12;
+
+                const availW = Math.max(200, vw - padX);
+                const availH = Math.max(300, vh - padY);
+
+                // Skala dla belki u góry (maksymalnie do szerokości ekranu telefonu)
+                let lbScale = Math.min(1, availW / lbBaseW);
+                let lbScaledH = lbBaseH * lbScale;
+
+                // Pozostałe miejsce w pionie dla pilota AS 422 Polonia
+                let remAvailH = availH - lbScaledH - gapY;
+                let remScale = Math.min(1, (availW * 0.92) / remBaseW, remAvailH / remBaseH);
+
+                // Gdy ekran jest bardzo niski w pionie, dopasuj oba elementy proporcjonalnie
+                if (remScale < 0.55) {
+                    const totalBaseH = lbBaseH + remBaseH;
+                    const commonScale = Math.min(1, (availH - gapY) / totalBaseH);
+                    lbScale = Math.min(lbScale, commonScale);
+                    lbScaledH = lbBaseH * lbScale;
+                    remAvailH = availH - lbScaledH - gapY;
+                    remScale = Math.min(1, (availW * 0.92) / remBaseW, remAvailH / remBaseH);
+                }
+
+                simLayout.style.gap = `${gapY}px`;
+
+                lightbarStage.style.transform = `scale(${lbScale})`;
+                lightbarSlot.style.width  = `${Math.ceil(lbBaseW * lbScale)}px`;
+                lightbarSlot.style.height = `${Math.ceil(lbBaseH * lbScale)}px`;
+
+                remoteWrapper.style.transform = `scale(${remScale})`;
+                remoteSlot.style.width  = `${Math.ceil(remBaseW * remScale)}px`;
+                remoteSlot.style.height = `${Math.ceil(remBaseH * remScale)}px`;
+            } else {
+                // TRYB POZIOMY (TELEFON LANDSCAPE / TABLET / MONITOR / TV): Belka po lewej, Pilot po prawej
+                const padX = 28;
+                const padY = 16;
+                const baseGapX = 48;
+
+                const availW = Math.max(300, vw - padX);
+                const availH = Math.max(200, vh - padY);
+
+                const totalBaseW = lbBaseW + baseGapX + remBaseW;
+                const maxBaseH   = Math.max(lbBaseH, remBaseH);
+
+                // Na dużych ekranach (tablety, monitory, TV) skala wynosi 1.0 (brak zmian).
+                // Na telefonach w poziomie całość skaluje się proporcjonalnie, aby nic nie wychodziło poza ekran.
+                const scale = Math.min(1, availW / totalBaseW, availH / maxBaseH);
+
+                simLayout.style.gap = `${Math.round(baseGapX * scale)}px`;
+
+                lightbarStage.style.transform = `scale(${scale})`;
+                lightbarSlot.style.width  = `${Math.ceil(lbBaseW * scale)}px`;
+                lightbarSlot.style.height = `${Math.ceil(lbBaseH * scale)}px`;
+
+                remoteWrapper.style.transform = `scale(${scale})`;
+                remoteSlot.style.width  = `${Math.ceil(remBaseW * scale)}px`;
+                remoteSlot.style.height = `${Math.ceil(remBaseH * scale)}px`;
+            }
+        }
+
+        window.addEventListener('resize', fitSimulatorToViewport);
+        window.addEventListener('orientationchange', () => setTimeout(fitSimulatorToViewport, 60));
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', fitSimulatorToViewport);
+        }
+        window.addEventListener('DOMContentLoaded', fitSimulatorToViewport);
+        window.addEventListener('load', fitSimulatorToViewport);
 
         // =========================================================================
         // 1. SYSTEM AUDIO (Oryginalny silnik AS 422 Polonia)
@@ -1447,8 +1591,6 @@
         // =========================================================================
 
         // --- A. ZEGAR ŚWIATEŁ NIEBIESKICH (Zwolniony do tempa z filmu: 75 ms / krok) ---
-        // Dwa lewe niebieskie moduły (L1 i L2) zawsze świecą razem w Fazie A,
-        // naprzemiennie z prawym modułem niebieskim (R1) w Fazie B.
         let blueFlashStep = 0;
 
         setInterval(() => {
