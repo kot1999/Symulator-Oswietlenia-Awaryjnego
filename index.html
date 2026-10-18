@@ -401,6 +401,7 @@
             cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.35);
+            touch-action: none;
         }
         .center-wl-panel.illuminated {
             background: radial-gradient(circle, #ffffff 0%, #f5f9ff 70%, #dcebff 100%);
@@ -418,6 +419,7 @@
             text-shadow: 0 1px 0 rgba(255,255,255,0.5);
             z-index: 7;
             transition: color 0.15s ease, text-shadow 0.15s ease;
+            pointer-events: none;
         }
         .center-wl-panel.illuminated .wl-text {
             color: #003ea1;
@@ -676,7 +678,9 @@
             pointer-events: none;
         }
 
-        .btn:active {
+        /* Efekt fizycznego wciśnięcia działający dla wielu przycisków jednocześnie (.pressed) */
+        .btn:active,
+        .btn.pressed {
             transform: scale(0.96) translateY(1px);
             box-shadow: 
                 inset 0 1px 2px rgba(255, 255, 255, 0.6),
@@ -777,7 +781,7 @@
                         </div>
 
                         <!-- 3. ŚRODKOWY PODŚWIETLANY KASETON: Napis POLICJA -->
-                        <div class="center-wl-panel" id="mod-wl-panel" onclick="cycleWlText()" title="Kliknij, aby zmienić napis na kasetonie">
+                        <div class="center-wl-panel" id="mod-wl-panel" title="Kliknij, aby zmienić napis na kasetonie">
                             <span class="wl-text" id="wl-text-content">POLICJA</span>
                         </div>
 
@@ -881,7 +885,7 @@
                     <div class="button-grid">
                         <!-- Rząd 1: OFF | Mikrofon -->
                         <div class="btn-well">
-                            <div class="btn" id="btn-off" onclick="turnOffAll()">
+                            <div class="btn" id="btn-off">
                                 <svg viewBox="0 0 60 60">
                                     <text x="30" y="41" text-anchor="middle" class="icon-fill" font-family="Arial, sans-serif" font-weight="bold" font-size="31" textLength="46" lengthAdjust="spacingAndGlyphs">OFF</text>
                                 </svg>
@@ -889,7 +893,7 @@
                         </div>
 
                         <div class="btn-well">
-                            <div class="btn" id="btn-radio" onclick="toggleLightBtn('btn-radio')">
+                            <div class="btn" id="btn-radio">
                                 <svg viewBox="0 0 60 60">
                                     <g transform="translate(25, 26) rotate(-32)">
                                         <rect x="-13" y="-10" width="24" height="19" rx="3" fill="none" class="icon-stroke" stroke-width="2.6"/>
@@ -905,7 +909,7 @@
 
                         <!-- Rząd 2: Dwie nutki | AH -->
                         <div class="btn-well">
-                            <div class="btn" id="btn-siren" onclick="toggleSiren()">
+                            <div class="btn" id="btn-siren">
                                 <svg viewBox="0 0 60 60">
                                     <g transform="translate(19, 25) rotate(-12)">
                                         <ellipse cx="-4" cy="7" rx="5.5" ry="3.8" transform="rotate(-20 -4 7)" class="icon-fill"/>
@@ -929,7 +933,7 @@
 
                         <!-- Rząd 3: Kogut pusty | Kogut półpełny -->
                         <div class="btn-well">
-                            <div class="btn" id="btn-light1" onclick="toggleLightBtn('btn-light1')">
+                            <div class="btn" id="btn-light1">
                                 <svg viewBox="0 0 60 60">
                                     <rect x="15" y="42" width="30" height="6" rx="2" class="icon-fill"/>
                                     <path d="M19,42 L20,23 C20,14 40,14 40,23 L41,42 Z" fill="none" class="icon-stroke" stroke-width="3.2" stroke-linejoin="round"/>
@@ -944,7 +948,7 @@
                         </div>
 
                         <div class="btn-well">
-                            <div class="btn" id="btn-light2" onclick="toggleLightBtn('btn-light2')">
+                            <div class="btn" id="btn-light2">
                                 <svg viewBox="0 0 60 60">
                                     <rect x="15" y="42" width="30" height="6" rx="2" class="icon-fill"/>
                                     <path d="M19,42 L20,23 C20,14 40,14 40,23 L41,42 Z" fill="none" class="icon-stroke" stroke-width="3.2" stroke-linejoin="round"/>
@@ -961,7 +965,7 @@
 
                         <!-- Rząd 4: Dwa reflektory w górę | Dwa reflektory do środka -->
                         <div class="btn-well">
-                            <div class="btn" id="btn-grill1" onclick="toggleLightBtn('btn-grill1')">
+                            <div class="btn" id="btn-grill1">
                                 <svg viewBox="0 0 60 60">
                                     <path d="M7,31 A10,9.5 0 0,0 27,31 Z" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linejoin="round"/>
                                     <line x1="12" y1="20" x2="12" y2="26" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
@@ -977,7 +981,7 @@
                         </div>
 
                         <div class="btn-well">
-                            <div class="btn" id="btn-grill2" onclick="toggleLightBtn('btn-grill2')">
+                            <div class="btn" id="btn-grill2">
                                 <svg viewBox="0 0 60 60">
                                     <path d="M16,20 A10,10 0 0,1 16,40 Z" fill="none" class="icon-stroke" stroke-width="2.8" stroke-linejoin="round"/>
                                     <line x1="6" y1="24" x2="12" y2="24" class="icon-stroke" stroke-width="2.6" stroke-linecap="round"/>
@@ -994,7 +998,7 @@
 
                         <!-- Rząd 5: Lampka sufitowa | Pusty przycisk (Postojowe / AH -> Robocze przód) -->
                         <div class="btn-well">
-                            <div class="btn" id="btn-aux1" onclick="toggleLightBtn('btn-aux1')">
+                            <div class="btn" id="btn-aux1">
                                 <svg viewBox="0 0 60 60">
                                     <line x1="16" y1="20" x2="44" y2="20" class="icon-stroke" stroke-width="3.6" stroke-linecap="round"/>
                                     <path d="M21,21 A9,7.5 0 0,0 39,21 Z" fill="none" class="icon-stroke" stroke-width="2.8"/>
@@ -1013,7 +1017,7 @@
                         </div>
 
                         <div class="btn-well">
-                            <div class="btn" id="btn-aux2" onclick="toggleLightBtn('btn-aux2')">
+                            <div class="btn" id="btn-aux2">
                                 <div class="led-dot"></div>
                             </div>
                         </div>
@@ -1103,8 +1107,6 @@
                 const totalBaseW = lbBaseW + baseGapX + remBaseW;
                 const maxBaseH   = Math.max(lbBaseH, remBaseH);
 
-                // Na dużych ekranach (tablety, monitory, TV) skala wynosi 1.0 (brak zmian).
-                // Na telefonach w poziomie całość skaluje się proporcjonalnie, aby nic nie wychodziło poza ekran.
                 const scale = Math.min(1, availW / totalBaseW, availH / maxBaseH);
 
                 simLayout.style.gap = `${Math.round(baseGapX * scale)}px`;
@@ -1139,6 +1141,8 @@
         let isSirenActive = false;
         let isAhPressed = false;
         let currentModIndex = 0;
+        let lastAutoBlueTimestamp = 0; // Znacznik czasu dla jednoczesnego kliknięcia Syreny + Koguta głównego
+
         const sirenModes = ['wilk', 'pies', 'leon', 'priority']; 
         const sirenNames = {
             'wilk': 'Wail (Wilk)',
@@ -1304,15 +1308,13 @@
 
         // --- OBSŁUGA SYRENY (Nutki) ---
         async function toggleSiren() {
-            await initAudioSystem();
-            if (audioCtx.state === 'suspended') await audioCtx.resume();
-            
             const btnSiren = document.getElementById('btn-siren');
             const btnLight1 = document.getElementById('btn-light1');
 
             // Automatyczne włączenie koguta głównego (Kogut pusty) przy włączeniu syreny
             if (!lightState.blueMain) {
                 lightState.blueMain = true;
+                lastAutoBlueTimestamp = performance.now();
                 btnLight1.classList.add('active');
                 applyStaticLights();
             }
@@ -1321,43 +1323,29 @@
                 isSirenActive = true;
                 currentModIndex = 0; 
                 btnSiren.classList.add('active');
-                
-                if (currentSirenSource) {
-                    try { currentSirenSource.stop(); } catch(e){}
-                }
-                
-                if (!isAhPressed) {
-                    currentSirenSource = playBuffer(sirenModes[currentModIndex]);
-                }
             } else {
-                if (currentSirenSource) {
-                    try { currentSirenSource.stop(); } catch(e){}
-                    currentSirenSource = null;
-                }
-                
                 currentModIndex = (currentModIndex + 1) % sirenModes.length;
-                
-                if (!isAhPressed) {
-                    currentSirenSource = playBuffer(sirenModes[currentModIndex]);
-                }
             }
             updateStatusBar();
+
+            await initAudioSystem();
+            if (audioCtx.state === 'suspended') await audioCtx.resume();
+            if (!isSirenActive) return;
+
+            if (currentSirenSource) {
+                try { currentSirenSource.stop(); } catch(e){}
+                currentSirenSource = null;
+            }
+            if (!isAhPressed) {
+                currentSirenSource = playBuffer(sirenModes[currentModIndex]);
+            }
         }
 
-        // --- OBSŁUGA AIR HORN (Chwilowy - odporny na długie przytrzymanie na dotyku) ---
+        // --- OBSŁUGA AIR HORN (Wielodotykowa - śledzi niezależne palce trzymające AH) ---
         const btnAh = document.getElementById('btn-ah');
+        const ahPointers = new Set();
 
-        btnAh.addEventListener('touchstart', startAirHorn, { passive: false });
-        btnAh.addEventListener('touchend', stopAirHorn, { passive: false });
-        btnAh.addEventListener('touchcancel', stopAirHorn, { passive: false });
-
-        btnAh.addEventListener('pointerdown', startAirHorn);
-        btnAh.addEventListener('pointerup', stopAirHorn);
-        btnAh.addEventListener('pointerleave', stopAirHorn);
-        btnAh.addEventListener('pointercancel', stopAirHorn);
-
-        async function startAirHorn(e) {
-            if (e && e.cancelable) e.preventDefault();
+        async function startAirHorn() {
             if (isAhPressed) return;
             isAhPressed = true;
             
@@ -1382,8 +1370,7 @@
             currentHornSource = playBuffer('horn', true);
         }
 
-        function stopAirHorn(e) {
-            if (e && e.cancelable) e.preventDefault();
+        function stopAirHorn() {
             if (!isAhPressed) return;
             isAhPressed = false;
             
@@ -1446,6 +1433,13 @@
         // --- OBSŁUGA ŚWIATEŁ ---
         function toggleLightBtn(id) {
             const btn = document.getElementById(id);
+
+            // Jeśli użytkownik wcisnął jednocześnie "Dwie nutki" oraz "Kogut pusty" dwoma palcami,
+            // nie wyłączaj koguta głównego, który przed ułamkiem sekundy włączyła syrena
+            if (id === 'btn-light1' && lightState.blueMain && (performance.now() - lastAutoBlueTimestamp < 160)) {
+                return;
+            }
+
             const isActive = btn.classList.toggle('active');
 
             switch (id) {
@@ -1480,6 +1474,7 @@
         function turnOffAll() {
             isSirenActive = false;
             isAhPressed = false;
+            ahPointers.clear();
             
             if (currentSirenSource) {
                 try { currentSirenSource.stop(); } catch(e){}
@@ -1497,6 +1492,77 @@
             clearFlashingModules();
             updateStatusBar();
         }
+
+        // =========================================================================
+        // 2B. OBSŁUGA WIELODOTYKU (MULTI-TOUCH) DLA WSZYSTKICH PRZYCISKÓW PILOTA
+        // =========================================================================
+        function bindMultiTouchToggle(btnId, actionCallback) {
+            const btn = document.getElementById(btnId);
+            const activePointers = new Set();
+
+            btn.addEventListener('pointerdown', (e) => {
+                if (e.button !== undefined && e.button !== 0) return; // Tylko główny przycisk myszy lub dotyk
+                e.preventDefault();
+                try { btn.setPointerCapture(e.pointerId); } catch (_) {}
+
+                activePointers.add(e.pointerId);
+                btn.classList.add('pressed');
+
+                actionCallback();
+            });
+
+            const releasePointer = (e) => {
+                activePointers.delete(e.pointerId);
+                if (activePointers.size === 0) {
+                    btn.classList.remove('pressed');
+                }
+            };
+
+            btn.addEventListener('pointerup', releasePointer);
+            btn.addEventListener('pointercancel', releasePointer);
+            btn.addEventListener('lostpointercapture', releasePointer);
+        }
+
+        // Przypisanie wielodotyku do wszystkich przycisków przełączających
+        bindMultiTouchToggle('btn-off',    () => turnOffAll());
+        bindMultiTouchToggle('btn-radio',  () => toggleLightBtn('btn-radio'));
+        bindMultiTouchToggle('btn-siren',  () => toggleSiren());
+        bindMultiTouchToggle('btn-light1', () => toggleLightBtn('btn-light1'));
+        bindMultiTouchToggle('btn-light2', () => toggleLightBtn('btn-light2'));
+        bindMultiTouchToggle('btn-grill1', () => toggleLightBtn('btn-grill1'));
+        bindMultiTouchToggle('btn-grill2', () => toggleLightBtn('btn-grill2'));
+        bindMultiTouchToggle('btn-aux1',   () => toggleLightBtn('btn-aux1'));
+        bindMultiTouchToggle('btn-aux2',   () => toggleLightBtn('btn-aux2'));
+
+        // Przypisanie wielodotyku do przycisku chwilowego AH (Air Horn)
+        btnAh.addEventListener('pointerdown', (e) => {
+            if (e.button !== undefined && e.button !== 0) return;
+            e.preventDefault();
+            try { btnAh.setPointerCapture(e.pointerId); } catch (_) {}
+
+            ahPointers.add(e.pointerId);
+            btnAh.classList.add('pressed');
+            startAirHorn();
+        });
+
+        function releaseAhPointer(e) {
+            ahPointers.delete(e.pointerId);
+            if (ahPointers.size === 0) {
+                btnAh.classList.remove('pressed');
+                stopAirHorn();
+            }
+        }
+
+        btnAh.addEventListener('pointerup', releaseAhPointer);
+        btnAh.addEventListener('pointercancel', releaseAhPointer);
+        btnAh.addEventListener('lostpointercapture', releaseAhPointer);
+
+        // Obsługa wielodotyku dla zmiany napisu na kasetonie POLICJA
+        modWlPanel.addEventListener('pointerdown', (e) => {
+            if (e.button !== undefined && e.button !== 0) return;
+            e.preventDefault();
+            cycleWlText();
+        });
 
         // Aktualizacja świateł ciągłych (Robocze przód, Robocze boki, Kaseton WL, Postojowe Cruise)
         function applyStaticLights() {
