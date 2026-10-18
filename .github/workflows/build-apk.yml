@@ -29,18 +29,14 @@ jobs:
 
       - name: 4. Przygotowanie plików, ikony i konfiguracja Capacitora
         run: |
-          # Tworzymy folder tymczasowy www i kopiujemy pliki strony
           mkdir -p www
           rsync -av --exclude='www' --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='android' ./ www/
 
-          # Czyszczenie starych plików package.json
           rm -f package.json package-lock.json
 
-          # Inicjalizacja projektu i instalacja narzędzi
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets sharp
 
-          # Tworzenie pliku konfiguracyjnego aplikacji
           cat << 'EOF' > capacitor.config.json
           {
             "appId": "pl.kot1999.symulatoroswietlenia",
@@ -50,10 +46,8 @@ jobs:
           }
           EOF
 
-          # Generowanie natywnego projektu Android
           npx cap add android
 
-          # Przetwarzanie ikony icon.png z repozytorium
           if [ -f "icon.png" ]; then
             echo "Znaleziono icon.png - generowanie ikony aplikacji..."
             mkdir -p assets
@@ -73,15 +67,13 @@ jobs:
               })();
             '
             npx @capacitor/assets generate --android --iconBackgroundColor '#ffffff' --splashBackgroundColor '#ffffff'
-          else
-            echo "UWAGA: Nie znaleziono pliku icon.png w głównym katalogu."
           fi
 
           npx cap sync android
 
-      - name: 5. Stały klucz podpisu i kompilacja pliku .apk (Gradle)
+      - name: 5. Stały klucz, kompilacja i siłowe podpisywanie (apksigner)
         run: |
-          mkdir -p ~/.android
+          # Zapewnienie istnienia stałego klucza
           if [ ! -f ".github/debug.keystore" ]; then
             echo "Generowanie stałego klucza podpisu..."
             keytool -genkey -v -keystore .github/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
@@ -91,8 +83,8 @@ jobs:
             git commit -m "Dodanie stalego klucza podpisu APK [skip ci]" || true
             git push || true
           fi
-          cp .github/debug.keystore ~/.android/debug.keystore
 
+          # Podbijanie wersji (aby Android widział nowszą aplikację przy aktualizacji)
           sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/g" android/app/build.gradle
           sed -i "s/versionName \"1.0\"/versionName \"1.0.${{ github.run_number }}\"/g" android/app/build.gradle
 
@@ -105,11 +97,16 @@ jobs:
           }
           EOF
 
+          # Budowanie paczki APK
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
-          # Zmiana nazwy pliku na pełną nazwę ze spacjami i polskimi znakami
+          # Bezpośrednie i siłowe podpisanie pliku APK naszym kluczem
+          BUILD_TOOLS_VERSION=$(ls -1 $ANDROID_HOME/build-tools | sort -rV | head -n 1)
+          $ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/apksigner sign --ks ../.github/debug.keystore --ks-pass pass:android --key-pass pass:android --ks-key-alias androiddebugkey app/build/outputs/apk/debug/app-debug.apk
+
+          # Zmiana nazwy
           mv app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/Symulator Oświetlenia Awaryjnego.apk"
 
       - name: 6. Udostępnienie gotowego pliku APK do pobrania
