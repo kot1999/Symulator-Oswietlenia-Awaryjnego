@@ -3,7 +3,7 @@ name: Budowanie aplikacji Android APK
 on:
   push:
     branches: [ "main", "master" ]
-  workflow_dispatch: # Pozwala też uruchomić budowanie ręcznie przyciskiem
+  workflow_dispatch:
 
 jobs:
   build-android:
@@ -16,19 +16,22 @@ jobs:
       - name: 2. Konfiguracja Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
-      - name: 3. Konfiguracja Java JDK 21 (wymagane przez Android SDK)
-        uses: actions/setup-java@v4
+      - name: 3. Konfiguracja Java JDK 21
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'
 
       - name: 4. Przygotowanie plików i konfiguracja Capacitora
         run: |
-          # Tworzymy folder tymczasowy www i kopiujemy pliki strony (z pominięciem plików systemowych)
+          # Tworzymy folder tymczasowy www i kopiujemy pliki strony
           mkdir -p www
           rsync -av --exclude='www' --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='android' ./ www/
+
+          # Czyszczenie ewentualnych starych plików package.json przed inicjalizacją
+          rm -f package.json package-lock.json
 
           # Inicjalizacja projektu i instalacja Capacitora
           npm init -y
@@ -44,19 +47,23 @@ jobs:
           }
           EOF
 
-          # Jeśli w projekcie jest plik icon.png (min. 512x512 px), wygeneruj z niego ikony Androida
-          if [ -f "icon.png" ]; then
-            mkdir -p assets
-            cp icon.png assets/icon.png
-            npx @capacitor/assets generate --android
-          fi
-
-          # Wygenerowanie natywnego projektu Android
+          # Generowanie natywnego projektu Android
           npx cap add android
           npx cap sync android
 
       - name: 5. Kompilacja pliku .apk (Gradle)
         run: |
+          # Naprawa błędu "Duplicate class kotlin" - wykluczenie starych duplikatów jdk7/jdk8
+          cat << 'EOF' >> android/build.gradle
+
+          allprojects {
+              configurations.all {
+                  exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk7"
+                  exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk8"
+              }
+          }
+          EOF
+
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
