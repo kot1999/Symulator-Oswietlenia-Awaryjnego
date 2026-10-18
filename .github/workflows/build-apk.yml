@@ -5,6 +5,9 @@ on:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-android:
     runs-on: ubuntu-latest
@@ -24,18 +27,18 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: 4. Przygotowanie plików i konfiguracja Capacitora
+      - name: 4. Przygotowanie plików, ikony i konfiguracja Capacitora
         run: |
           # Tworzymy folder tymczasowy www i kopiujemy pliki strony
           mkdir -p www
           rsync -av --exclude='www' --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='android' ./ www/
 
-          # Czyszczenie ewentualnych starych plików package.json przed inicjalizacją
+          # Czyszczenie ewentualnych starych plików package.json
           rm -f package.json package-lock.json
 
-          # Inicjalizacja projektu i instalacja Capacitora
+          # Inicjalizacja projektu i instalacja Capacitora wraz z generatorem ikon
           npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
 
           # Tworzenie pliku konfiguracyjnego aplikacji
           cat << 'EOF' > capacitor.config.json
@@ -49,11 +52,56 @@ jobs:
 
           # Generowanie natywnego projektu Android
           npx cap add android
+
+          # Wyszukiwanie pliku ikony w repozytorium i automatyczne generowanie ikon Androida
+          ICON_FILE=""
+          for f in icon.png icon.jpg icon.svg logo.png logo.jpg logo.svg favicon.png; do
+            if [ -f "$f" ]; then
+              ICON_FILE="$f"
+              break
+            fi
+          done
+
+          if [ -n "$ICON_FILE" ]; then
+            echo "Znaleziono ikonę: $ICON_FILE - generowanie ikon aplikacji..."
+            mkdir -p assets
+            ICON_FILE="$ICON_FILE" node -e '
+              const sharp = require("sharp");
+              const icon = process.env.ICON_FILE;
+              (async () => {
+                await sharp(icon).resize(1024, 1024, { fit: "contain", background: "#ffffff" }).png().toFile("assets/icon.png");
+                const logo = await sharp(icon).resize(600, 600, { fit: "contain", background: "#ffffff" }).png().toBuffer();
+                await sharp({ create: { width: 2732, height: 2732, channels: 4, background: "#ffffff" } })
+                  .composite([{ input: logo, gravity: "center" }]).png().toFile("assets/splash.png");
+              })();
+            '
+            npx @capacitor/assets generate --android --iconBackgroundColor '#ffffff' --splashBackgroundColor '#ffffff'
+          else
+            echo "UWAGA: Nie znaleziono pliku icon.png w repozytorium - użyto domyślnej ikony."
+          fi
+
           npx cap sync android
 
-      - name: 5. Kompilacja pliku .apk (Gradle)
+      - name: 5. Stały klucz podpisu i kompilacja pliku .apk (Gradle)
         run: |
-          # Naprawa błędu "Duplicate class kotlin" - wykluczenie starych duplikatów jdk7/jdk8
+          # Tworzenie lub wczytywanie stałego klucza podpisu (aby aktualizacje działały bez konfliktu pakietów)
+          mkdir -p ~/.android
+          if [ ! -f ".github/debug.keystore" ]; then
+            echo "Generowanie stałego klucza podpisu i zapisywanie w repozytorium..."
+            keytool -genkey -v -keystore .github/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add .github/debug.keystore
+            git commit -m "Dodanie stalego klucza podpisu APK [skip ci]" || true
+            git push || true
+          fi
+          cp .github/debug.keystore ~/.android/debug.keystore
+
+          # Automatyczne podbijanie numeru wersji przy każdym nowym budowaniu
+          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/g" android/app/build.gradle
+          sed -i "s/versionName \"1.0\"/versionName \"1.0.${{ github.run_number }}\"/g" android/app/build.gradle
+
+          # Naprawa błędu "Duplicate class kotlin"
           cat << 'EOF' >> android/build.gradle
 
           allprojects {
@@ -68,7 +116,7 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug
 
-          # Zmiana nazwy gotowego pliku z app-debug.apk na własną nazwę
+          # Zmiana nazwy gotowego pliku na własną nazwę
           mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Symulator-Oswietlenia-Awaryjnego.apk
 
       - name: 6. Udostępnienie gotowego pliku APK do pobrania
